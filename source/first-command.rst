@@ -125,8 +125,6 @@ vnode instead of the first one.
 
 But where does the command go?
 
-    tano.erl -> riak_core -> tano_vnode.erl
-
 Let's see the content of tanodb_vnode.erl (just the useful parts):
 
 .. code-block:: erlang
@@ -173,7 +171,7 @@ Let's go by parts, first we declare our module:
 
     -module(tanodb_vnode).
 
-Then we specify that we want to implement the riak_core_vnode behavior:
+We specify that we want to implement the riak_core_vnode behavior:
 
 .. code-block:: erlang
 
@@ -217,7 +215,7 @@ typical Erlang way of managing state so I won't cover it here:
 
     -record(state, {partition}).
 
-Then we implement the api to start the vnode:
+We implement the api to start the vnode:
 
 .. code-block:: erlang
 
@@ -233,25 +231,24 @@ this is what I referred above as vnode id, it's the big number you saw before:
     init([Partition]) ->
         {ok, #state { partition=Partition }}.
 
-And now for the interesting part, here we have our ping command implementation,
+Now for the interesting part, here we have our ping command implementation,
 we match for ping in the Message position (the first argument):
 
 .. code-block:: erlang
 
     handle_command(ping, _Sender, State) ->
 
-And return a reply response with the second item in the tuple being the actual
-response that the caller will get where we reply with the atom pong and the
-partition number of this vnode, the last item in the tuple is the new state we
-want to have for this vnode, since we didn't change anything we pass the
-current value:
+Return a response with the second item in the tuple being the actual response
+that the caller will get where we reply with the atom pong and the partition
+number of this vnode, the last item in the tuple is the new state we want to
+have for this vnode, since we didn't change anything we pass the current value:
 
 .. code-block:: erlang
 
         {reply, {pong, State#state.partition}, State};
 
-And then we implement a catch all that will just log the unknown command and
-give no reply back:
+We implement a catch all that will just log the unknown command and give no
+reply back:
 
 .. code-block:: erlang
 
@@ -259,8 +256,7 @@ give no reply back:
         lager:warning("unhandled_command ~p", [Message]),
         {noreply, State}.
 
-So, this is the roundtrip of the ping call, our task to add more commands will
-be:
+This is the roundtrip of a ping call, our task to add more commands will be:
 
 * Add a function on tanodb.erl that hides the internal work done to distribute the work
 * Add a new match on handle_command to match the command we added on tanodb.erl and provide a reply
