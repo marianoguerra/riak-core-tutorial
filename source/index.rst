@@ -11,8 +11,8 @@ Welcome to Riak Core Tutorial's documentation!
    :caption: Contents:
 
    setup
-
-
+   starting
+   first-command
 
 Indices and tables
 ==================

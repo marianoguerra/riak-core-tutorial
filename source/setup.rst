@@ -13,6 +13,10 @@ To install Erlang we will use `kerl <https://github.com/kerl/kerl>`_, from its g
     Kerl aims to be shell agnostic and its only dependencies, excluding what's
     required to actually build Erlang/OTP, are curl and git.
 
+.. note::
+
+    On mac you can install it with homebrew: `brew install kerl`
+
 So, first we need to fetch kerl:
 
 .. code:: sh
