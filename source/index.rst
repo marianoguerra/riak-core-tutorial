@@ -12,7 +12,7 @@ Welcome to Riak Core Tutorial's documentation!
 
    setup
    starting
-   first-command
+   ping-command
 
 Indices and tables
 ==================
