@@ -3,8 +3,8 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to Riak Core Tutorial's documentation!
-==============================================
+Riak Core Tutorial
+==================
 
 .. toctree::
    :maxdepth: 2
@@ -13,10 +13,7 @@ Welcome to Riak Core Tutorial's documentation!
    setup
    starting
    ping-command
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+   first-command
+   quorum-requests
+   handoff
+   coverage-calls

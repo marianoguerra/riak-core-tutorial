@@ -1,5 +1,5 @@
-First Command
-=============
+Ping Command
+============
 
 Let's see how ping works under the covers.
 
