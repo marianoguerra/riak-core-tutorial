@@ -4,6 +4,74 @@ Handoff
 How it Works
 ------------
 
+With quorum requests we are halfway in our way to tolerate failures in cluster
+nodes, our values are written to more than one vnode but if a node dies and
+another takes his work or if we add a new node and the vnodes must be
+rebalanced we need to handle `handoff <https://github.com/basho/riak_core/wiki/Handoffs>`_.
+
+The reasons to start a handoff are:
+
+* A ring update event for a ring that all other nodes have already seen.
+* A secondary vnode is idle for a period of time and the primary, original
+  owner of the partition is up again.
+
+When this happens riak_core will inform the vnode that handoff is starting,
+calling `handoff_starting`, if it returns false it's cancelled, if it returns
+true it calls `is_empty`, that must return false to inform that the vnode has
+something to handoff (it's not empty) or true to inform that the vnode is
+empty, in our case we ask for the first element of the ets table and if it's
+the special value '$end_of_table' we know it's empty, if it returns true the
+handoff is considered finished, if false then a call is done to `handle_handoff_command`
+passing as first parameter an opaque structure that contains two fields we are
+insterested in, foldfun and acc0, they can be unpacked with a macro like this:
+
+.. code-block:: erlang
+
+    handle_handoff_command(?FOLD_REQ{foldfun=Fun, acc0=Acc0}, _Sender, State) ->
+
+The `FOLD_REQ` macro is defined in the riak_core_vnode.hrl header file which we
+include.
+
+This function must iterate through all the keys it stores and for each of them
+call foldfun with the key as first argument, the value as second argument and
+the latest acc0 value as third.
+
+The result of the function call is the new `Acc0` you must pass to the next
+call to foldfun, the last `Acc0` must be returned by the handle_handoff_command.
+
+For each call to `Fun(Key, Entry, AccIn0)` riak_core will send it to the new
+vnode, to do that it must encode the data before sending, it does this by
+calling `encode_handoff_item(Key, Value)`, where you must encode the data
+before sending it.
+
+When the value is received by the new vnode it must decode it and do something
+with it, this is done by the function `handle_handoff_data`, where we decode the
+received data and do the appropriate thing with it.
+
+When we sent all the key/values `handoff_finished` will be called and then
+`delete` so we cleanup the data on the old vnode .
+
+You can decide to handle other commands sent to the vnode while the handoff is
+running, you can choose to do one of the followings:
+
+* Handle it in the current vnode
+* Forward it to the vnode we are handing off
+* Drop it
+
+What to do depends on the design of you app, all of them have tradeoffs.
+
+The signature of all the responses is:
+
+.. code:: erlang
+
+    -callback handle_handoff_command(Request::term(), Sender::sender(), ModState::term()) ->
+    {reply, Reply::term(), NewModState::term()} |
+    {noreply, NewModState::term()} |
+    {async, Work::function(), From::sender(), NewModState::term()} |
+    {forward, NewModState::term()} |
+    {drop, NewModState::term()} |
+    {stop, Reason::term(), NewModState::term()}.
+
 A diagram of the flow is as follows::
 
      +-----------+      +----------+        +----------+                
@@ -23,7 +91,7 @@ A diagram of the flow is as follows::
 Implementing it
 ---------------
 
-tanodb_vnode.erl
+We need to add logic to all the empty callbacks related to handoff:
 
 .. code-block:: erlang
 

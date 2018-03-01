@@ -4,10 +4,54 @@ Coverage Calls
 How it Works
 ------------
 
+Since bucket and key are hashed together to decide to which vnode a request
+will go it means that the keys for a given bucket may be distributed in
+multiple vnodes, and in case you are running in a cluster this means your keys
+are distributed in multiple physical nodes.
+
+This means that to list all the keys from a bucket we have to ask all the
+vnodes for the keys on a given bucket and then put the responses together and
+return the set of all responses.
+
+For this Riak Core provides something called coverage calls, which are a way to
+handle this process of running a command on all vnodes and gathering the
+responses.
+
+In this chapter we are going to implement the `tanodb:keys(Bucket)` function
+using coverage calls.
+
+In this case we call `tanodb_coverage_fsm:start({keys, Bucket}, Timeout)`, which
+is a new module, it implements a behavior called `riak_core_coverage_fsm`, short
+for riak_core_coverage `finite state machine <https://en.wikipedia.org/wiki/Finite-state_machine>`_,
+it implements some predefined callbacks that are called on different states of
+a finite state machine.
+
+The start function calls `tanodb_coverage_fsm_sup:start_fsm([ReqId, self(), Request, Timeout])`
+which starts a supervisor for this new process.
+
+When we start the fsm with a command `{keys, Bucket}` and a timeout in
+milliseconds, it starts a supervisor that starts the finite state machine
+process, it first calls the init function which initializes the state of the
+process and returns some information to riak_core so it knows what kind of
+coverage call we want to do, then riak_core calls the handle_coverage function
+on each vnode and with each response it calls `process_result` in our process.
+
+When all the results are received or if an error happens (such as a timeout) it
+will call the finish callback there we send the results to the calling process
+which is waiting for it.
+
+The handle_coverage implementation is really simple, it uses the
+`ets:match/2 function <http://www.erlang.org/doc/man/ets.html#match-2>`_ to
+match against all the entries with the given bucket and returns the key from
+the matched results.
+
+You can read more about ets match specs in the
+`match spec chapter on the Erlang documentation <http://www.erlang.org/doc/apps/erts/match_spec.html>`_.
+
 Implementing it
 ---------------
 
-tanodb.erl
+Code in tanodb.erl is really simple:
 
 .. code-block:: erlang
 
@@ -16,7 +60,7 @@ tanodb.erl
 		tanodb_coverage_fsm:start({keys, Bucket}, Timeout).
 
 
-tanodb_vnode.erl
+In tanodb_vnode.erl we need to implement the handle_coverage callback:
 
 .. code-block:: erlang
 
@@ -26,8 +70,14 @@ tanodb_vnode.erl
 		Keys = lists:map(fun first/1, Keys0),
 		{reply, {RefId, Keys}, State};
 
-Add tanodb_coverage_fsm and tanodb_coverage_fsm_sup.
-Add tanodb_coverage_fsm_sup to tanodb_sup
+We add two new modules: 
+
+tanodb_coverage_fsm
+    The FSM implementation for the coverage call.
+tanodb_coverage_fsm_sup
+    The supervisor for the FSM processes.
+
+We also add the tanodb_coverage_fsm_sup to the tanodb_sup supervisor tree.
 
 Testing it
 ----------

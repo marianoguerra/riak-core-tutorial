@@ -1,6 +1,9 @@
 Ping Command
 ============
 
+How it Works
+------------
+
 Let's see how ping works under the covers.
 
 Its entry point and public API is the tanodb module, that means we have to

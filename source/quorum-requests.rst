@@ -4,7 +4,14 @@ Quorum Requests
 How it Works
 ------------
 
-Here is a diagram of how it works::
+Quorum requests allows sending a command to more than one vnode and wait until
+a number of responses are received before considering the request succesful.
+
+To implement this we need a process that distributed the requests to the first
+N vnodes in the preference list and waits for at least W response to arrive
+before returning to the requester.
+
+We use a gen_fsm to implement this process, which looks like this::
 
     +------+    +---------+    +---------+    +---------+              +------+
     |      |    |         |    |         |    |         |remaining = 0 |      |
@@ -21,7 +28,8 @@ Here is a diagram of how it works::
 Implementing it
 ---------------
 
-tanodb.erl
+To implement it we need to change the code in tanodb.erl instantiate a FSM
+to handle the request instead of sending the command directly to one vnode.
 
 .. code-block:: erlang
 
@@ -43,6 +51,13 @@ tanodb.erl
 		tanodb_write_fsm:delete(?N, Key, self(), ReqId),
 		wait_for_reqid(ReqId, Timeout).
 
+To wait for the right answer we need to generate a unique identifier for each
+request and send it with the request itself. The identifier will come back
+in the message sent by the FSM once the request finishes.
+
+If too much time passed waiting for the response we consider it an error and
+return before receiving it.
+
 .. code-block:: erlang
 
 	wait_for_reqid(ReqId, Timeout) ->
@@ -53,7 +68,8 @@ tanodb.erl
 			Timeout -> {error, timeout}
 		end.
 
-tanodb_vnode.erl
+On the vnode command handlers we need to receive the request id and return it
+in the response:
 
 .. code-block:: erlang
 
@@ -79,13 +95,21 @@ tanodb_vnode.erl
 		Res = {ok, Partition},
 		{reply, {ReqId, Res}, State};
 
-tanodb_write_fsm.erl and tanodb_write_fsm_sup.erl
+Two new files are created:
 
-Add tanodb_write_fsm_sup to tanodb_sup
+tanodb_write_fsm.erl
+    The FSM logic
+tanodb_write_fsm_sup.erl
+    The supervisor for the FSMs
 
+Finally we need to add tanodb_write_fsm_sup to our top level supervisor in
+tanodb_sup.
 
 Testing it
 ----------
+
+To test it we are going to run some calls to the API and observe that now
+the response contains more than one response:
 
 .. code-block:: erlang
 
