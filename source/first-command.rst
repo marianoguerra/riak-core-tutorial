@@ -1,10 +1,12 @@
 First Command
 =============
 
-Get and Put
------------
+Implementing Get and Put
+------------------------
 
-tanodb.erl
+For our first commands we will copy the general structure of the ping command.
+
+We will start by adding two new functions to tha tanodb.erl file:
 
 .. code-block:: erlang
 
@@ -14,6 +16,10 @@ tanodb.erl
 	put(Key, Value) ->
 		send_to_one(Key, {put, Key, Value}).
 
+And generalizing the code used by ping to send a command to one vnode:
+
+.. code-block:: erlang
+
 	%% Private Functions
 
 	send_to_one(Key, Cmd) ->
@@ -22,7 +28,8 @@ tanodb.erl
 		[{IndexNode, _Type}] = PrefList,
 		riak_core_vnode_master:sync_spawn_command(IndexNode, Cmd, tanodb_vnode_master).
 
-tanodb_vnode.erl
+In tanodb_vnode.erl we will need to first create an ETS table per vnode at
+initialization and keep a reference to the table_id in the state record:
 
 .. code-block:: erlang
 
@@ -34,12 +41,16 @@ tanodb_vnode.erl
 
 		{ok, #state{partition=Partition, table_id=TableId}}.
 
+We then need to add two new clauses to the handle_command callback to handle
+our two new commands, which translate almost directly to ets calls:
+
 .. code-block:: erlang
 
 	handle_command({put, Key, Value}, _Sender,
 				   State=#state{table_id=TableId, partition=Partition}) ->
 		ets:insert(TableId, {Key, Value}),
 		{reply, {ok, Partition}, State};
+
 	handle_command({get, Key}, _Sender,
 				   State=#state{table_id=TableId, partition=Partition}) ->
 		case ets:lookup(TableId, Key) of
@@ -49,18 +60,19 @@ tanodb_vnode.erl
 				{reply, {found, Partition, {Key, Value}}, State}
 		end;
 
+Before continuing think and if possible try to implement a delete function yourself.
 
-Delete
-------
+Implementing Delete
+-------------------
 
-tanodb.erl
+Here is the implementation of delete, in tanodb.erl we add a new function:
 
 .. code-block:: erlang
 
 	delete(Key) ->
 		send_to_one(Key, {delete, Key}).
 
-tanodb_vnode.erl
+In tanodb_vnode.erl we add a new clause to handle_command:
 
 .. code-block:: erlang
 
