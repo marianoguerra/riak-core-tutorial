@@ -3,10 +3,68 @@ Setup
 
 We first need to have Erlang installed and rebar3 installed.
 
-Setting up kerl
----------------
+The Easy Way
+------------
 
-To install Erlang we will use `kerl <https://github.com/kerl/kerl>`_, from its github README::
+If you don't have Erlang installed or you don't have problem to install the
+latest one system wide you can try installing it with your package manager:
+
+
+* For Homebrew on OS X: `brew install erlang`
+* For MacPorts on OS X: `port install erlang`
+* For Ubuntu and Debian: `apt-get install erlang`
+* For Fedora: `yum install erlang`
+* For FreeBSD: `pkg install erlang`
+
+Please check that the package version is 20.x, if not, check for instructions
+on how to install the Erlang Solutions package for Ubuntu, CentOS, Mac OS X, Debian or Fedora here: https://www.erlang-solutions.com/resources/download.html
+
+Setting up rebar3
+-----------------
+
+Now we have Erlang, we need a build tool, we are going to use `rebar3 <http://rebar3.org>`_:
+
+.. code:: sh
+
+    # download rebar3 to our bin directory
+    wget https://s3.amazonaws.com/rebar3/rebar3 -O $HOME/bin/rebar3
+
+    # set execution permissions for our user
+    chmod u+x rebar3
+
+Just in case you have problems running the rebar3 commands with a different
+version, here's the version I'm using:
+
+.. code:: sh
+
+    rebar3 version
+
+Output::
+
+    rebar 3.5.0 on Erlang/OTP 20 Erts 9.2
+
+Install Riak Core Rebar3 Template
+---------------------------------
+
+To create a Riak Core project from scratch we will use a template called `rebar3_template_riak_core <https://github.com/marianoguerra/rebar3_template_riak_core/>`_.
+
+we need to clone its repo in a place where rebar3 can see it:
+
+.. code:: sh
+
+    mkdir -p ~/.config/rebar3/templates
+    git clone https://github.com/marianoguerra/rebar3_template_riak_core.git ~/.config/rebar3/templates/rebar3_template_riak_core
+
+The Hard Way: Building Erlang with kerl
+---------------------------------------
+
+.. note::
+
+    If you installed Erlang with the instructions above, skip until the
+    *Test that Everything Works* section below.
+
+If you have or want to have more than one version running side by side you can
+use `kerl <https://github.com/kerl/kerl>`_, from its github README::
 
     Easy building and installing of Erlang/OTP instances.
 
@@ -15,9 +73,9 @@ To install Erlang we will use `kerl <https://github.com/kerl/kerl>`_, from its g
 
 .. note::
 
-    On mac you can install it with homebrew: `brew install kerl`
+    On Mac you can install it with homebrew: `brew install kerl`
 
-So, first we need to fetch kerl:
+First we need to fetch kerl:
 
 .. code:: sh
 
@@ -110,7 +168,7 @@ The output in my case::
     17.0 17.1 17.3 17.4 17.5 18.0 18.1 18.2.1 18.2 18.3 19.0 19.1 19.2 19.3
     20.0 20.1 20.2
 
-Let's build the 20.1 version:
+Let's build the 20.2 version:
 
 .. code:: sh
 
@@ -128,42 +186,6 @@ Now everytime we want to use this version of Erlang we need to run:
 .. code:: sh
 
     . $HOME/bin/erl-20.2/activate
-
-Setting up rebar3
------------------
-
-Now we have Erlang, we need a build tool, we are going to use `rebar3 <http://rebar3.org>`_:
-
-.. code:: sh
-
-    # download rebar3 to our bin directory
-    wget https://s3.amazonaws.com/rebar3/rebar3 -O $HOME/bin/rebar3
-
-    # set execution permissions for our user
-    chmod u+x rebar3
-
-Just in case you have problems running the rebar3 commands with a different
-version, here's the version I'm using:
-
-.. code:: sh
-
-    rebar3 version
-
-Output::
-
-    rebar 3.5.0 on Erlang/OTP 20 Erts 9.2
-
-Install Riak Core Rebar3 Template
----------------------------------
-
-To create a Riak Core project from scratch we will use a template called `rebar3_template_riak_core <https://github.com/marianoguerra/rebar3_template_riak_core/>`_.
-
-we need to clone its repo in a place where rebar3 can see it:
-
-.. code:: sh
-
-    mkdir -p ~/.config/rebar3/templates
-    git clone https://github.com/marianoguerra/rebar3_template_riak_core.git ~/.config/rebar3/templates/rebar3_template_riak_core
 
 Test that Everything Works
 --------------------------
