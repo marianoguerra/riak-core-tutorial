@@ -17,3 +17,4 @@ Riak Core Tutorial
    quorum-requests
    handoff
    coverage-calls
+   http-api
