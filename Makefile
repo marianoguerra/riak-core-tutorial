@@ -13,7 +13,7 @@ help:
 	@$(SPHINXBUILD) -M help "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 
 publish: html
-	cd build/ && rm -rf riak-core-tutorial.tgz && mv html riak-core-tutorial && tar -czf riak-core-tutorial.tgz riak-core-tutorial && scp riak-core-tutorial.tgz marianoguerra@marianoguerra.org:~/marianoguerra.org/tmp/ && ssh marianoguerra@marianoguerra.org "cd ~/marianoguerra.org/tmp; rm -rf riak-core-tutorial; tar -xzf riak-core-tutorial.tgz"
+	cd build/ && rm -rf riak-core-tutorial* && mv html riak-core-tutorial && tar -czf riak-core-tutorial.tgz riak-core-tutorial && scp riak-core-tutorial.tgz marianoguerra@marianoguerra.org:~/marianoguerra.org/tmp/ && ssh marianoguerra@marianoguerra.org "cd ~/marianoguerra.org/tmp; rm -rf riak-core-tutorial; tar -xzf riak-core-tutorial.tgz"
 
 
 .PHONY: help Makefile
