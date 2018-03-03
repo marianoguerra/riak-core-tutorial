@@ -96,13 +96,14 @@ We need to add logic to all the empty callbacks related to handoff:
 .. code-block:: erlang
 
     handle_handoff_command(?FOLD_REQ{foldfun=FoldFun, acc0=Acc0}, _Sender,
-                           State=#state{partition=Partition, table_id=TableId}) ->
+                           State=#state{partition=Partition, kv_state=KvState}) ->
         lager:info("fold req ~p", [Partition]),
-        AccFinal = ets:foldl(fun ({Key, Val}, AccIn) ->
-                                     lager:info("fold fun ~p: ~p", [Key, Val]),
-                                     FoldFun(Key, Val, AccIn)
-                             end, Acc0, TableId),
-        {reply, AccFinal, State};
+        KvFoldFun = fun ({Key, Val}, AccIn) ->
+                            lager:info("fold fun ~p: ~p", [Key, Val]),
+                            FoldFun(Key, Val, AccIn)
+                    end,
+        {AccFinal, KvState1} = tanodb_kv_ets:foldl(KvFoldFun, Acc0, KvState),
+        {reply, AccFinal, State#state{kv_state=KvState1}};
 
     handle_handoff_command(Message, _Sender, State) ->
         lager:warning("handoff command ~p, ignoring", [Message]),
@@ -120,26 +121,26 @@ We need to add logic to all the empty callbacks related to handoff:
         lager:info("handoff finished ~p: ~p", [Partition, TargetNode]),
         {ok, State}.
 
-    handle_handoff_data(BinData, State=#state{table_id=TableId}) ->
+    handle_handoff_data(BinData, State=#state{kv_state=KvState}) ->
         TermData = binary_to_term(BinData),
         lager:info("handoff data received ~p", [TermData]),
-        {Key, Value} = TermData,
-        ets:insert(TableId, {Key, Value}),
-        {reply, ok, State}.
+        {{Bucket, Key}, Value} = TermData,
+        {ok, KvState1} = tanodb_kv_ets:put(KvState, Bucket, Key, Value),
+        {reply, ok, State#state{kv_state=KvState1}}.
 
     encode_handoff_item(Key, Value) ->
         term_to_binary({Key, Value}).
 
-    is_empty(State=#state{table_id=TableId, partition=Partition}) ->
-        IsEmpty = (ets:first(TableId) =:= '$end_of_table'),
+    is_empty(State=#state{kv_state=KvState, partition=Partition}) ->
+        {IsEmpty, KvState1} = tanodb_kv_ets:is_empty(KvState),
         lager:info("is_empty ~p: ~p", [Partition, IsEmpty]),
-        {IsEmpty, State}.
+        {IsEmpty, State#state{kv_state=KvState1}}.
 
-    delete(State=#state{table_id=TableId, partition=Partition}) ->
+    delete(State=#state{kv_state=KvState, partition=Partition}) ->
         lager:info("delete ~p", [Partition]),
-        ets:delete(TableId),
-        {ok, State}.
-
+        {ok, KvState1} = tanodb_kv_ets:dispose(KvState),
+        {ok, KvState2} = tanodb_kv_ets:delete(KvState1),
+        {ok, State#state{kv_state=KvState2}}.
 
 Testing it
 ----------
@@ -215,7 +216,7 @@ And then put some values to the buckets and keys we created:
     lists:foreach(fun (Bucket) ->
         lists:foreach(fun (Key) ->
             Val = GenValue(Bucket, Key),
-            tanodb:put({Bucket, Key}, Val)
+            tanodb:put(Bucket, Key, Val)
         end, Keys)
     end, Buckets).
 
