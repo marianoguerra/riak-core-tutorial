@@ -55,20 +55,19 @@ Code in tanodb.erl is really simple:
 
 .. code-block:: erlang
 
-	keys(Bucket) ->
-		Timeout = 5000,
-		tanodb_coverage_fsm:start({keys, Bucket}, Timeout).
+    keys(Bucket, Opts) ->
+        Timeout = maps:get(timeout, Opts, ?TIMEOUT),
+        tanodb_coverage_fsm:start({keys, Bucket}, Timeout).
 
 
 In tanodb_vnode.erl we need to implement the handle_coverage callback:
 
 .. code-block:: erlang
 
-	handle_coverage({keys, Bucket}, _KeySpaces, {_, RefId, _},
-					State=#state{table_id=TableId}) ->
-		Keys0 = ets:match(TableId, {{Bucket, '$1'}, '_'}),
-		Keys = lists:map(fun first/1, Keys0),
-		{reply, {RefId, Keys}, State};
+    handle_coverage({keys, Bucket}, _KeySpaces, {_, RefId, _},
+                    State=#state{kv_state=KvState}) ->
+        {Keys, KvState1} = tanodb_kv_ets:keys(KvState, Bucket),
+        {reply, {RefId, Keys}, State#state{kv_state=KvState1}};
 
 We add two new modules: 
 
@@ -94,7 +93,7 @@ Testing it
 	lists:foreach(fun (Bucket) ->
 		lists:foreach(fun (Key) ->
 			Val = GenValue(Bucket, Key),
-			tanodb:put({Bucket, Key}, Val)
+			tanodb:put(Bucket, Key, Val)
 		end, Keys)
 	end, Buckets).
 
