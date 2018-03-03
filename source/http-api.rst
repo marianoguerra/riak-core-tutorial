@@ -52,8 +52,8 @@ The API handler module tanodb_h_kv's main code:
         {Bucket, Key} = bindings(ReqIn),
         reply(ReqIn, State, tanodb:delete(Bucket, Key)).
 
-Testing It
-----------
+Trying it
+---------
 
 Single Node
 ...........

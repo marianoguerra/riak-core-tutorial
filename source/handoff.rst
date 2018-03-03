@@ -142,8 +142,8 @@ We need to add logic to all the empty callbacks related to handoff:
         {ok, KvState2} = tanodb_kv_ets:delete(KvState1),
         {ok, State#state{kv_state=KvState2}}.
 
-Testing it
-----------
+Trying it
+---------
 
 To test it we will first start a devrel node, put some values and then join
 two other nodes and see on the console the handoff happening.

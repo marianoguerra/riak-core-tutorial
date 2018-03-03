@@ -96,8 +96,8 @@ tanodb_write_fsm_sup.erl
 Finally we need to add tanodb_write_fsm_sup to our top level supervisor in
 tanodb_sup.
 
-Testing it
-----------
+Trying it
+---------
 
 To test it we are going to run some calls to the API and observe that now
 the response contains more than one response:

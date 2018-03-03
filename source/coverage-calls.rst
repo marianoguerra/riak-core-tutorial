@@ -78,8 +78,8 @@ tanodb_coverage_fsm_sup
 
 We also add the tanodb_coverage_fsm_sup to the tanodb_sup supervisor tree.
 
-Testing it
-----------
+Trying it
+---------
 
 .. code-block:: erlang
 
