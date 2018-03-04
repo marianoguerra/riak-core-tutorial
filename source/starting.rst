@@ -77,7 +77,7 @@ but to make it short, it's the id of the process that replied to us.
 Exploring the Template Files
 ----------------------------
 
-The template created a lot of files and you are like me, you don't like things
+The template created a lot of files and if you are like me, you don't like things
 that make magic and don't explain what's going on, that's why we will get a
 brief overview of the files created here.
 
@@ -161,10 +161,6 @@ config/advanced.config
     This file is where we configure some advanced things of our application
     that don't go on our `tanodb.config` file, here we configure riak_core and
     our `logging library <https://github.com/basho/lager/>`_
-
-config/sys.config
-    This is a standard Erlang application file, you can read more about it
-    in the `Erlang documentation for sys.config <http://www.erlang.org/doc/man/config.html>`_
 
 config/vars.config
     This file contains variables used by relx to build a release, you can
