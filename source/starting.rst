@@ -338,7 +338,7 @@ anything.
 Let's package our release::
 
     cd _build/prod/rel
-    tar -czf tanodb.tgz tanodb
+    tar -czf tanodb.tgz tanodb tanodb_config
     cd -
     mv _build/prod/rel/tanodb.tgz .
 
@@ -346,7 +346,7 @@ You can copy it to a clean OS and run::
 
     tar -xzf tanodb.tgz
     ./tanodb/bin/tanodb console
-             
+
 And it runs!
 
 .. note::
