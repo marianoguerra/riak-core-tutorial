@@ -1,6 +1,13 @@
 Quorum Requests
 ===============
 
+.. note::
+
+
+    The content of this chapter is in the `03-quorum` branch.
+
+    https://gitlab.com/marianoguerra/tanodb/tree/03-quorum
+
 How it Works
 ------------
 

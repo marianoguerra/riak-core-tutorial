@@ -1,6 +1,13 @@
 First Commands
 ==============
 
+.. note::
+
+
+    The content of this chapter is in the `02-commands` branch.
+
+    https://gitlab.com/marianoguerra/tanodb/tree/02-commands
+
 Implementing Get, Put and Delete
 --------------------------------
 

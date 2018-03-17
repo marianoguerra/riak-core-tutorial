@@ -1,6 +1,13 @@
 Handoff
 =======
 
+.. note::
+
+
+    The content of this chapter is in the `04-handoff` branch.
+
+    https://gitlab.com/marianoguerra/tanodb/tree/04-handoff
+
 How it Works
 ------------
 

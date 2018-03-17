@@ -1,6 +1,13 @@
 Ping Command
 ============
 
+.. note::
+
+
+    The content of this chapter is in the `01-template` branch.
+
+    https://gitlab.com/marianoguerra/tanodb/tree/01-template
+
 How it Works
 ------------
 

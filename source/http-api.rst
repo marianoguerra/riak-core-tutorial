@@ -1,6 +1,13 @@
 HTTP API
 ========
 
+.. note::
+
+
+    The content of this chapter is in the `06-http-api` branch.
+
+    https://gitlab.com/marianoguerra/tanodb/tree/06-http-api
+
 How it Works
 ------------
 

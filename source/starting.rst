@@ -35,6 +35,13 @@ The output should be something like this::
     ===> Writing tanodb/config/vars_dev2.config
     ===> Writing tanodb/config/vars_dev3.config
 
+.. note::
+
+
+    The content of this chapter is in the `01-template` branch.
+
+    https://gitlab.com/marianoguerra/tanodb/tree/01-template
+
 Building and Running
 --------------------
 
