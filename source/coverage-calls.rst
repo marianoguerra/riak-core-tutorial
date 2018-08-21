@@ -3,7 +3,6 @@ Coverage Calls
 
 .. note::
 
-
     The content of this chapter is in the `05-coverage` branch.
 
     https://gitlab.com/marianoguerra/tanodb/tree/05-coverage

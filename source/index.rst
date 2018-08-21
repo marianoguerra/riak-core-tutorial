@@ -18,3 +18,4 @@ Riak Core Tutorial
    handoff
    coverage-calls
    http-api
+   leveled-backend
