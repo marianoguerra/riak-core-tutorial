@@ -1,0 +1,481 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>HTTP API &#8212; Riak Core Tutorial 1.0 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Making it a persistent KV Store with leveled backend" href="leveled-backend.html" />
+    <link rel="prev" title="Coverage Calls" href="coverage-calls.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="http-api">
+<h1>HTTP API<a class="headerlink" href="#http-api" title="Permalink to this headline">¶</a></h1>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p>The content of this chapter is in the <cite>06-http-api</cite> branch.</p>
+<p class="last"><a class="reference external" href="https://gitlab.com/marianoguerra/tanodb/tree/06-http-api">https://gitlab.com/marianoguerra/tanodb/tree/06-http-api</a></p>
+</div>
+<div class="section" id="how-it-works">
+<h2>How it Works<a class="headerlink" href="#how-it-works" title="Permalink to this headline">¶</a></h2>
+<p>We are adding a simple HTTP API to our system, it will run on all nodes and
+allow us to interact with it from the outside.</p>
+<p>We will use the Cowboy 2.0 HTTP Server.</p>
+</div>
+<div class="section" id="implementing-it">
+<h2>Implementing it<a class="headerlink" href="#implementing-it" title="Permalink to this headline">¶</a></h2>
+<p>We need to add cowboy as a dependency on rebar.config and tanodb.app.src.</p>
+<p>Then in tanodb_app.erl we need to start the HTTP API:</p>
+<div class="highlight-erlang"><div class="highlight"><pre><span></span><span class="nf">setup_http_api</span><span class="p">()</span> <span class="o">-&gt;</span>
+  <span class="nv">Dispatch</span> <span class="o">=</span> <span class="nn">cowboy_router</span><span class="p">:</span><span class="nf">compile</span><span class="p">([{</span><span class="n">&#39;_&#39;</span><span class="p">,</span> <span class="p">[{</span><span class="s">&quot;/kv/:bucket/:key&quot;</span><span class="p">,</span> <span class="n">tanodb_h_kv</span><span class="p">,</span> <span class="p">[]}]}]),</span>
+
+  <span class="nv">HttpPort</span> <span class="o">=</span> <span class="nn">application</span><span class="p">:</span><span class="nf">get_env</span><span class="p">(</span><span class="n">tanodb</span><span class="p">,</span> <span class="n">http_port</span><span class="p">,</span> <span class="mi">8080</span><span class="p">),</span>
+  <span class="nv">HttpAcceptors</span> <span class="o">=</span> <span class="nn">application</span><span class="p">:</span><span class="nf">get_env</span><span class="p">(</span><span class="n">tanodb</span><span class="p">,</span> <span class="n">http_acceptors</span><span class="p">,</span> <span class="mi">100</span><span class="p">),</span>
+  <span class="nv">HttpMaxConnections</span> <span class="o">=</span> <span class="nn">application</span><span class="p">:</span><span class="nf">get_env</span><span class="p">(</span><span class="n">tanodb</span><span class="p">,</span> <span class="n">http_max_connections</span><span class="p">,</span> <span class="n">infinity</span><span class="p">),</span>
+
+  <span class="nn">lager</span><span class="p">:</span><span class="nf">info</span><span class="p">(</span><span class="s">&quot;Starting HTTP API at port </span><span class="si">~p</span><span class="s">&quot;</span><span class="p">,</span> <span class="p">[</span><span class="nv">HttpPort</span><span class="p">]),</span>
+
+  <span class="p">{</span><span class="n">ok</span><span class="p">,</span> <span class="p">_}</span> <span class="o">=</span> <span class="nn">cowboy</span><span class="p">:</span><span class="nf">start_clear</span><span class="p">(</span><span class="n">tanodb_http_listener</span><span class="p">,</span>
+    <span class="p">[{</span><span class="n">port</span><span class="p">,</span> <span class="nv">HttpPort</span><span class="p">},</span>
+     <span class="p">{</span><span class="n">num_acceptors</span><span class="p">,</span> <span class="nv">HttpAcceptors</span><span class="p">},</span>
+     <span class="p">{</span><span class="n">max_connections</span><span class="p">,</span> <span class="nv">HttpMaxConnections</span><span class="p">}],</span>
+    <span class="p">#{</span><span class="n">env</span> <span class="o">=&gt;</span> <span class="p">#{</span><span class="n">dispatch</span> <span class="o">=&gt;</span> <span class="nv">Dispatch</span><span class="p">}}),</span>
+
+  <span class="n">ok</span><span class="p">.</span>
+</pre></div>
+</div>
+<p>We get the configuration from the environment, which is set by cuttlefish.</p>
+<p>The API handler module tanodb_h_kv’s main code:</p>
+<div class="highlight-erlang"><div class="highlight"><pre><span></span><span class="nf">init</span><span class="p">(</span><span class="nv">ReqIn</span><span class="o">=</span><span class="p">#{</span><span class="n">method</span> <span class="p">:</span><span class="o">=</span> <span class="o">&lt;&lt;</span><span class="s">&quot;GET&quot;</span><span class="o">&gt;&gt;</span><span class="p">},</span> <span class="nv">State</span><span class="p">)</span> <span class="o">-&gt;</span>
+    <span class="p">{</span><span class="nv">Bucket</span><span class="p">,</span> <span class="nv">Key</span><span class="p">}</span> <span class="o">=</span> <span class="n">bindings</span><span class="p">(</span><span class="nv">ReqIn</span><span class="p">),</span>
+    <span class="n">reply</span><span class="p">(</span><span class="nv">ReqIn</span><span class="p">,</span> <span class="nv">State</span><span class="p">,</span> <span class="nn">tanodb</span><span class="p">:</span><span class="nb">get</span><span class="p">(</span><span class="nv">Bucket</span><span class="p">,</span> <span class="nv">Key</span><span class="p">));</span>
+<span class="nf">init</span><span class="p">(</span><span class="nv">ReqIn</span><span class="o">=</span><span class="p">#{</span><span class="n">method</span> <span class="p">:</span><span class="o">=</span> <span class="o">&lt;&lt;</span><span class="s">&quot;POST&quot;</span><span class="o">&gt;&gt;</span><span class="p">},</span> <span class="nv">State</span><span class="p">)</span> <span class="o">-&gt;</span>
+    <span class="p">{</span><span class="nv">Bucket</span><span class="p">,</span> <span class="nv">Key</span><span class="p">}</span> <span class="o">=</span> <span class="n">bindings</span><span class="p">(</span><span class="nv">ReqIn</span><span class="p">),</span>
+    <span class="p">{</span><span class="n">ok</span><span class="p">,</span> <span class="nv">Value</span><span class="p">,</span> <span class="nv">Req1</span><span class="p">}</span> <span class="o">=</span> <span class="n">read_all_body</span><span class="p">(</span><span class="nv">ReqIn</span><span class="p">),</span>
+    <span class="n">reply</span><span class="p">(</span><span class="nv">Req1</span><span class="p">,</span> <span class="nv">State</span><span class="p">,</span> <span class="nn">tanodb</span><span class="p">:</span><span class="nb">put</span><span class="p">(</span><span class="nv">Bucket</span><span class="p">,</span> <span class="nv">Key</span><span class="p">,</span> <span class="nv">Value</span><span class="p">));</span>
+<span class="nf">init</span><span class="p">(</span><span class="nv">ReqIn</span><span class="o">=</span><span class="p">#{</span><span class="n">method</span> <span class="p">:</span><span class="o">=</span> <span class="o">&lt;&lt;</span><span class="s">&quot;DELETE&quot;</span><span class="o">&gt;&gt;</span><span class="p">},</span> <span class="nv">State</span><span class="p">)</span> <span class="o">-&gt;</span>
+    <span class="p">{</span><span class="nv">Bucket</span><span class="p">,</span> <span class="nv">Key</span><span class="p">}</span> <span class="o">=</span> <span class="n">bindings</span><span class="p">(</span><span class="nv">ReqIn</span><span class="p">),</span>
+    <span class="n">reply</span><span class="p">(</span><span class="nv">ReqIn</span><span class="p">,</span> <span class="nv">State</span><span class="p">,</span> <span class="nn">tanodb</span><span class="p">:</span><span class="nf">delete</span><span class="p">(</span><span class="nv">Bucket</span><span class="p">,</span> <span class="nv">Key</span><span class="p">)).</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="trying-it">
+<h2>Trying it<a class="headerlink" href="#trying-it" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="single-node">
+<h3>Single Node<a class="headerlink" href="#single-node" title="Permalink to this headline">¶</a></h3>
+<p>We are going to first test it on a single node.</p>
+<p>Get key <cite>k1</cite> in bucket <cite>b1</cite>, which doesn’t exist yet:</p>
+<div class="highlight-sh"><div class="highlight"><pre><span></span>curl -X GET  http://localhost:8098/kv/b1/k1
+</pre></div>
+</div>
+<div class="highlight-javascript"><div class="highlight"><pre><span></span><span class="p">{</span>
+  <span class="s2">&quot;replies&quot;</span><span class="o">:</span> <span class="p">[</span>
+    <span class="p">{</span>
+      <span class="s2">&quot;bucket&quot;</span><span class="o">:</span> <span class="s2">&quot;b1&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;error&quot;</span><span class="o">:</span> <span class="s2">&quot;not_found&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;key&quot;</span><span class="o">:</span> <span class="s2">&quot;k1&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;node&quot;</span><span class="o">:</span> <span class="s2">&quot;tanodb@127.0.0.1&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;ok&quot;</span><span class="o">:</span> <span class="kc">false</span><span class="p">,</span>
+      <span class="s2">&quot;partition&quot;</span><span class="o">:</span> <span class="s2">&quot;1301649895747835411525156804137939564381064921088&quot;</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+      <span class="s2">&quot;bucket&quot;</span><span class="o">:</span> <span class="s2">&quot;b1&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;error&quot;</span><span class="o">:</span> <span class="s2">&quot;not_found&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;key&quot;</span><span class="o">:</span> <span class="s2">&quot;k1&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;node&quot;</span><span class="o">:</span> <span class="s2">&quot;tanodb@127.0.0.1&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;ok&quot;</span><span class="o">:</span> <span class="kc">false</span><span class="p">,</span>
+      <span class="s2">&quot;partition&quot;</span><span class="o">:</span> <span class="s2">&quot;1278813932664540053428224228626747642198940975104&quot;</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+      <span class="s2">&quot;bucket&quot;</span><span class="o">:</span> <span class="s2">&quot;b1&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;error&quot;</span><span class="o">:</span> <span class="s2">&quot;not_found&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;key&quot;</span><span class="o">:</span> <span class="s2">&quot;k1&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;node&quot;</span><span class="o">:</span> <span class="s2">&quot;tanodb@127.0.0.1&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;ok&quot;</span><span class="o">:</span> <span class="kc">false</span><span class="p">,</span>
+      <span class="s2">&quot;partition&quot;</span><span class="o">:</span> <span class="s2">&quot;1255977969581244695331291653115555720016817029120&quot;</span>
+    <span class="p">}</span>
+  <span class="p">]</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>Put key <cite>k1</cite> in bucket <cite>b1</cite> with content <cite>hi there</cite>:</p>
+<div class="highlight-sh"><div class="highlight"><pre><span></span>curl -X POST  http://localhost:8098/kv/b1/k1 -d <span class="s1">&#39;hi there&#39;</span>
+</pre></div>
+</div>
+<div class="highlight-javascript"><div class="highlight"><pre><span></span><span class="p">{</span>
+  <span class="s2">&quot;replies&quot;</span><span class="o">:</span> <span class="p">[</span>
+    <span class="p">{</span>
+      <span class="s2">&quot;node&quot;</span><span class="o">:</span> <span class="s2">&quot;tanodb@127.0.0.1&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;ok&quot;</span><span class="o">:</span> <span class="kc">true</span><span class="p">,</span>
+      <span class="s2">&quot;partition&quot;</span><span class="o">:</span> <span class="s2">&quot;1301649895747835411525156804137939564381064921088&quot;</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+      <span class="s2">&quot;node&quot;</span><span class="o">:</span> <span class="s2">&quot;tanodb@127.0.0.1&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;ok&quot;</span><span class="o">:</span> <span class="kc">true</span><span class="p">,</span>
+      <span class="s2">&quot;partition&quot;</span><span class="o">:</span> <span class="s2">&quot;1278813932664540053428224228626747642198940975104&quot;</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+      <span class="s2">&quot;node&quot;</span><span class="o">:</span> <span class="s2">&quot;tanodb@127.0.0.1&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;ok&quot;</span><span class="o">:</span> <span class="kc">true</span><span class="p">,</span>
+      <span class="s2">&quot;partition&quot;</span><span class="o">:</span> <span class="s2">&quot;1255977969581244695331291653115555720016817029120&quot;</span>
+    <span class="p">}</span>
+  <span class="p">]</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>Get key <cite>k1</cite> in bucket <cite>b1</cite>, which now exists:</p>
+<div class="highlight-sh"><div class="highlight"><pre><span></span>curl -X GET  http://localhost:8098/kv/b1/k1
+</pre></div>
+</div>
+<div class="highlight-javascript"><div class="highlight"><pre><span></span><span class="p">{</span>
+  <span class="s2">&quot;replies&quot;</span><span class="o">:</span> <span class="p">[</span>
+    <span class="p">{</span>
+      <span class="s2">&quot;bucket&quot;</span><span class="o">:</span> <span class="s2">&quot;b1&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;key&quot;</span><span class="o">:</span> <span class="s2">&quot;k1&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;node&quot;</span><span class="o">:</span> <span class="s2">&quot;tanodb@127.0.0.1&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;ok&quot;</span><span class="o">:</span> <span class="kc">true</span><span class="p">,</span>
+      <span class="s2">&quot;partition&quot;</span><span class="o">:</span> <span class="s2">&quot;1301649895747835411525156804137939564381064921088&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;value&quot;</span><span class="o">:</span> <span class="s2">&quot;hi there&quot;</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+      <span class="s2">&quot;bucket&quot;</span><span class="o">:</span> <span class="s2">&quot;b1&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;key&quot;</span><span class="o">:</span> <span class="s2">&quot;k1&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;node&quot;</span><span class="o">:</span> <span class="s2">&quot;tanodb@127.0.0.1&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;ok&quot;</span><span class="o">:</span> <span class="kc">true</span><span class="p">,</span>
+      <span class="s2">&quot;partition&quot;</span><span class="o">:</span> <span class="s2">&quot;1278813932664540053428224228626747642198940975104&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;value&quot;</span><span class="o">:</span> <span class="s2">&quot;hi there&quot;</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+      <span class="s2">&quot;bucket&quot;</span><span class="o">:</span> <span class="s2">&quot;b1&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;key&quot;</span><span class="o">:</span> <span class="s2">&quot;k1&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;node&quot;</span><span class="o">:</span> <span class="s2">&quot;tanodb@127.0.0.1&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;ok&quot;</span><span class="o">:</span> <span class="kc">true</span><span class="p">,</span>
+      <span class="s2">&quot;partition&quot;</span><span class="o">:</span> <span class="s2">&quot;1255977969581244695331291653115555720016817029120&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;value&quot;</span><span class="o">:</span> <span class="s2">&quot;hi there&quot;</span>
+    <span class="p">}</span>
+  <span class="p">]</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>Delete key <cite>k1</cite> in bucket <cite>b1</cite>:</p>
+<div class="highlight-sh"><div class="highlight"><pre><span></span>curl -X DELETE  http://localhost:8098/kv/b1/k1
+</pre></div>
+</div>
+<div class="highlight-javascript"><div class="highlight"><pre><span></span><span class="p">{</span>
+  <span class="s2">&quot;replies&quot;</span><span class="o">:</span> <span class="p">[</span>
+    <span class="p">{</span>
+      <span class="s2">&quot;node&quot;</span><span class="o">:</span> <span class="s2">&quot;tanodb@127.0.0.1&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;ok&quot;</span><span class="o">:</span> <span class="kc">true</span><span class="p">,</span>
+      <span class="s2">&quot;partition&quot;</span><span class="o">:</span> <span class="s2">&quot;1301649895747835411525156804137939564381064921088&quot;</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+      <span class="s2">&quot;node&quot;</span><span class="o">:</span> <span class="s2">&quot;tanodb@127.0.0.1&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;ok&quot;</span><span class="o">:</span> <span class="kc">true</span><span class="p">,</span>
+      <span class="s2">&quot;partition&quot;</span><span class="o">:</span> <span class="s2">&quot;1278813932664540053428224228626747642198940975104&quot;</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+      <span class="s2">&quot;node&quot;</span><span class="o">:</span> <span class="s2">&quot;tanodb@127.0.0.1&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;ok&quot;</span><span class="o">:</span> <span class="kc">true</span><span class="p">,</span>
+      <span class="s2">&quot;partition&quot;</span><span class="o">:</span> <span class="s2">&quot;1255977969581244695331291653115555720016817029120&quot;</span>
+    <span class="p">}</span>
+  <span class="p">]</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>Get key <cite>k1</cite> in bucket <cite>b1</cite>, which shouldn’t exist anymore:</p>
+<div class="highlight-sh"><div class="highlight"><pre><span></span>curl -X GET  http://localhost:8098/kv/b1/k1
+</pre></div>
+</div>
+<div class="highlight-javascript"><div class="highlight"><pre><span></span><span class="p">{</span>
+  <span class="s2">&quot;replies&quot;</span><span class="o">:</span> <span class="p">[</span>
+    <span class="p">{</span>
+      <span class="s2">&quot;bucket&quot;</span><span class="o">:</span> <span class="s2">&quot;b1&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;error&quot;</span><span class="o">:</span> <span class="s2">&quot;not_found&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;key&quot;</span><span class="o">:</span> <span class="s2">&quot;k1&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;node&quot;</span><span class="o">:</span> <span class="s2">&quot;tanodb@127.0.0.1&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;ok&quot;</span><span class="o">:</span> <span class="kc">false</span><span class="p">,</span>
+      <span class="s2">&quot;partition&quot;</span><span class="o">:</span> <span class="s2">&quot;1301649895747835411525156804137939564381064921088&quot;</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+      <span class="s2">&quot;bucket&quot;</span><span class="o">:</span> <span class="s2">&quot;b1&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;error&quot;</span><span class="o">:</span> <span class="s2">&quot;not_found&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;key&quot;</span><span class="o">:</span> <span class="s2">&quot;k1&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;node&quot;</span><span class="o">:</span> <span class="s2">&quot;tanodb@127.0.0.1&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;ok&quot;</span><span class="o">:</span> <span class="kc">false</span><span class="p">,</span>
+      <span class="s2">&quot;partition&quot;</span><span class="o">:</span> <span class="s2">&quot;1278813932664540053428224228626747642198940975104&quot;</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+      <span class="s2">&quot;bucket&quot;</span><span class="o">:</span> <span class="s2">&quot;b1&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;error&quot;</span><span class="o">:</span> <span class="s2">&quot;not_found&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;key&quot;</span><span class="o">:</span> <span class="s2">&quot;k1&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;node&quot;</span><span class="o">:</span> <span class="s2">&quot;tanodb@127.0.0.1&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;ok&quot;</span><span class="o">:</span> <span class="kc">false</span><span class="p">,</span>
+      <span class="s2">&quot;partition&quot;</span><span class="o">:</span> <span class="s2">&quot;1255977969581244695331291653115555720016817029120&quot;</span>
+    <span class="p">}</span>
+  <span class="p">]</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="cluster">
+<h3>Cluster<a class="headerlink" href="#cluster" title="Permalink to this headline">¶</a></h3>
+<p>We are going to test it on a cluster now, notice that the port changes, we
+are sending each request to a different node.</p>
+<p>You can see each node’s port on the logs at startup:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="p">[</span><span class="n">info</span><span class="p">]</span> <span class="n">Starting</span> <span class="n">HTTP</span> <span class="n">API</span> <span class="n">at</span> <span class="n">port</span> <span class="mi">8198</span>
+</pre></div>
+</div>
+<p>Get key <cite>k1</cite> in bucket <cite>b1</cite>, which doesn’t exist yet:</p>
+<div class="highlight-sh"><div class="highlight"><pre><span></span>curl -X GET  http://localhost:8198/kv/b1/k1
+</pre></div>
+</div>
+<p>Notice the node name on the partition field, it may change for you depending
+on the state of handoff or how vnodes were distributed.</p>
+<div class="highlight-javascript"><div class="highlight"><pre><span></span><span class="p">{</span>
+  <span class="s2">&quot;replies&quot;</span><span class="o">:</span> <span class="p">[</span>
+    <span class="p">{</span>
+      <span class="s2">&quot;bucket&quot;</span><span class="o">:</span> <span class="s2">&quot;b1&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;error&quot;</span><span class="o">:</span> <span class="s2">&quot;not_found&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;key&quot;</span><span class="o">:</span> <span class="s2">&quot;k1&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;node&quot;</span><span class="o">:</span> <span class="s2">&quot;tanodb2@127.0.0.1&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;ok&quot;</span><span class="o">:</span> <span class="kc">false</span><span class="p">,</span>
+      <span class="s2">&quot;partition&quot;</span><span class="o">:</span> <span class="s2">&quot;1301649895747835411525156804137939564381064921088&quot;</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+      <span class="s2">&quot;bucket&quot;</span><span class="o">:</span> <span class="s2">&quot;b1&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;error&quot;</span><span class="o">:</span> <span class="s2">&quot;not_found&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;key&quot;</span><span class="o">:</span> <span class="s2">&quot;k1&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;node&quot;</span><span class="o">:</span> <span class="s2">&quot;tanodb1@127.0.0.1&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;ok&quot;</span><span class="o">:</span> <span class="kc">false</span><span class="p">,</span>
+      <span class="s2">&quot;partition&quot;</span><span class="o">:</span> <span class="s2">&quot;1278813932664540053428224228626747642198940975104&quot;</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+      <span class="s2">&quot;bucket&quot;</span><span class="o">:</span> <span class="s2">&quot;b1&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;error&quot;</span><span class="o">:</span> <span class="s2">&quot;not_found&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;key&quot;</span><span class="o">:</span> <span class="s2">&quot;k1&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;node&quot;</span><span class="o">:</span> <span class="s2">&quot;tanodb1@127.0.0.1&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;ok&quot;</span><span class="o">:</span> <span class="kc">false</span><span class="p">,</span>
+      <span class="s2">&quot;partition&quot;</span><span class="o">:</span> <span class="s2">&quot;1255977969581244695331291653115555720016817029120&quot;</span>
+    <span class="p">}</span>
+  <span class="p">]</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>Put key <cite>k1</cite> in bucket <cite>b1</cite> with content <cite>hi there</cite>:</p>
+<div class="highlight-sh"><div class="highlight"><pre><span></span>curl -X POST  http://localhost:8298/kv/b1/k1 -d <span class="s1">&#39;hi there&#39;</span>
+</pre></div>
+</div>
+<div class="highlight-javascript"><div class="highlight"><pre><span></span><span class="p">{</span>
+  <span class="s2">&quot;replies&quot;</span><span class="o">:</span> <span class="p">[</span>
+    <span class="p">{</span>
+      <span class="s2">&quot;node&quot;</span><span class="o">:</span> <span class="s2">&quot;tanodb1@127.0.0.1&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;ok&quot;</span><span class="o">:</span> <span class="kc">true</span><span class="p">,</span>
+      <span class="s2">&quot;partition&quot;</span><span class="o">:</span> <span class="s2">&quot;1255977969581244695331291653115555720016817029120&quot;</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+      <span class="s2">&quot;node&quot;</span><span class="o">:</span> <span class="s2">&quot;tanodb1@127.0.0.1&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;ok&quot;</span><span class="o">:</span> <span class="kc">true</span><span class="p">,</span>
+      <span class="s2">&quot;partition&quot;</span><span class="o">:</span> <span class="s2">&quot;1278813932664540053428224228626747642198940975104&quot;</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+      <span class="s2">&quot;node&quot;</span><span class="o">:</span> <span class="s2">&quot;tanodb2@127.0.0.1&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;ok&quot;</span><span class="o">:</span> <span class="kc">true</span><span class="p">,</span>
+      <span class="s2">&quot;partition&quot;</span><span class="o">:</span> <span class="s2">&quot;1301649895747835411525156804137939564381064921088&quot;</span>
+    <span class="p">}</span>
+  <span class="p">]</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>Get key <cite>k1</cite> in bucket <cite>b1</cite>, which now exists:</p>
+<div class="highlight-sh"><div class="highlight"><pre><span></span>curl -X GET  http://localhost:8398/kv/b1/k1
+</pre></div>
+</div>
+<div class="highlight-javascript"><div class="highlight"><pre><span></span><span class="p">{</span>
+  <span class="s2">&quot;replies&quot;</span><span class="o">:</span> <span class="p">[</span>
+    <span class="p">{</span>
+      <span class="s2">&quot;bucket&quot;</span><span class="o">:</span> <span class="s2">&quot;b1&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;key&quot;</span><span class="o">:</span> <span class="s2">&quot;k1&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;node&quot;</span><span class="o">:</span> <span class="s2">&quot;tanodb1@127.0.0.1&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;ok&quot;</span><span class="o">:</span> <span class="kc">true</span><span class="p">,</span>
+      <span class="s2">&quot;partition&quot;</span><span class="o">:</span> <span class="s2">&quot;1278813932664540053428224228626747642198940975104&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;value&quot;</span><span class="o">:</span> <span class="s2">&quot;hi there&quot;</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+      <span class="s2">&quot;bucket&quot;</span><span class="o">:</span> <span class="s2">&quot;b1&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;key&quot;</span><span class="o">:</span> <span class="s2">&quot;k1&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;node&quot;</span><span class="o">:</span> <span class="s2">&quot;tanodb1@127.0.0.1&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;ok&quot;</span><span class="o">:</span> <span class="kc">true</span><span class="p">,</span>
+      <span class="s2">&quot;partition&quot;</span><span class="o">:</span> <span class="s2">&quot;1255977969581244695331291653115555720016817029120&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;value&quot;</span><span class="o">:</span> <span class="s2">&quot;hi there&quot;</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+      <span class="s2">&quot;bucket&quot;</span><span class="o">:</span> <span class="s2">&quot;b1&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;key&quot;</span><span class="o">:</span> <span class="s2">&quot;k1&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;node&quot;</span><span class="o">:</span> <span class="s2">&quot;tanodb2@127.0.0.1&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;ok&quot;</span><span class="o">:</span> <span class="kc">true</span><span class="p">,</span>
+      <span class="s2">&quot;partition&quot;</span><span class="o">:</span> <span class="s2">&quot;1301649895747835411525156804137939564381064921088&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;value&quot;</span><span class="o">:</span> <span class="s2">&quot;hi there&quot;</span>
+    <span class="p">}</span>
+  <span class="p">]</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>Delete key <cite>k1</cite> in bucket <cite>b1</cite>:</p>
+<div class="highlight-sh"><div class="highlight"><pre><span></span>curl -X DELETE  http://localhost:8198/kv/b1/k1
+</pre></div>
+</div>
+<div class="highlight-javascript"><div class="highlight"><pre><span></span><span class="p">{</span>
+  <span class="s2">&quot;replies&quot;</span><span class="o">:</span> <span class="p">[</span>
+    <span class="p">{</span>
+      <span class="s2">&quot;node&quot;</span><span class="o">:</span> <span class="s2">&quot;tanodb2@127.0.0.1&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;ok&quot;</span><span class="o">:</span> <span class="kc">true</span><span class="p">,</span>
+      <span class="s2">&quot;partition&quot;</span><span class="o">:</span> <span class="s2">&quot;1301649895747835411525156804137939564381064921088&quot;</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+      <span class="s2">&quot;node&quot;</span><span class="o">:</span> <span class="s2">&quot;tanodb1@127.0.0.1&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;ok&quot;</span><span class="o">:</span> <span class="kc">true</span><span class="p">,</span>
+      <span class="s2">&quot;partition&quot;</span><span class="o">:</span> <span class="s2">&quot;1278813932664540053428224228626747642198940975104&quot;</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+      <span class="s2">&quot;node&quot;</span><span class="o">:</span> <span class="s2">&quot;tanodb1@127.0.0.1&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;ok&quot;</span><span class="o">:</span> <span class="kc">true</span><span class="p">,</span>
+      <span class="s2">&quot;partition&quot;</span><span class="o">:</span> <span class="s2">&quot;1255977969581244695331291653115555720016817029120&quot;</span>
+    <span class="p">}</span>
+  <span class="p">]</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>Get key <cite>k1</cite> in bucket <cite>b1</cite>, which shouldn’t exist anymore:</p>
+<div class="highlight-sh"><div class="highlight"><pre><span></span>curl -X GET  http://localhost:8298/kv/b1/k1
+</pre></div>
+</div>
+<div class="highlight-javascript"><div class="highlight"><pre><span></span><span class="p">{</span>
+  <span class="s2">&quot;replies&quot;</span><span class="o">:</span> <span class="p">[</span>
+    <span class="p">{</span>
+      <span class="s2">&quot;bucket&quot;</span><span class="o">:</span> <span class="s2">&quot;b1&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;error&quot;</span><span class="o">:</span> <span class="s2">&quot;not_found&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;key&quot;</span><span class="o">:</span> <span class="s2">&quot;k1&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;node&quot;</span><span class="o">:</span> <span class="s2">&quot;tanodb1@127.0.0.1&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;ok&quot;</span><span class="o">:</span> <span class="kc">false</span><span class="p">,</span>
+      <span class="s2">&quot;partition&quot;</span><span class="o">:</span> <span class="s2">&quot;1278813932664540053428224228626747642198940975104&quot;</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+      <span class="s2">&quot;bucket&quot;</span><span class="o">:</span> <span class="s2">&quot;b1&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;error&quot;</span><span class="o">:</span> <span class="s2">&quot;not_found&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;key&quot;</span><span class="o">:</span> <span class="s2">&quot;k1&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;node&quot;</span><span class="o">:</span> <span class="s2">&quot;tanodb1@127.0.0.1&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;ok&quot;</span><span class="o">:</span> <span class="kc">false</span><span class="p">,</span>
+      <span class="s2">&quot;partition&quot;</span><span class="o">:</span> <span class="s2">&quot;1255977969581244695331291653115555720016817029120&quot;</span>
+    <span class="p">},</span>
+    <span class="p">{</span>
+      <span class="s2">&quot;bucket&quot;</span><span class="o">:</span> <span class="s2">&quot;b1&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;error&quot;</span><span class="o">:</span> <span class="s2">&quot;not_found&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;key&quot;</span><span class="o">:</span> <span class="s2">&quot;k1&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;node&quot;</span><span class="o">:</span> <span class="s2">&quot;tanodb2@127.0.0.1&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;ok&quot;</span><span class="o">:</span> <span class="kc">false</span><span class="p">,</span>
+      <span class="s2">&quot;partition&quot;</span><span class="o">:</span> <span class="s2">&quot;1301649895747835411525156804137939564381064921088&quot;</span>
+    <span class="p">}</span>
+  <span class="p">]</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">HTTP API</a><ul>
+<li><a class="reference internal" href="#how-it-works">How it Works</a></li>
+<li><a class="reference internal" href="#implementing-it">Implementing it</a></li>
+<li><a class="reference internal" href="#trying-it">Trying it</a><ul>
+<li><a class="reference internal" href="#single-node">Single Node</a></li>
+<li><a class="reference internal" href="#cluster">Cluster</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="coverage-calls.html" title="previous chapter">Coverage Calls</a></li>
+      <li>Next: <a href="leveled-backend.html" title="next chapter">Making it a persistent KV Store with leveled backend</a></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/http-api.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2018, Mariano Guerra.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.7</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.8</a>
+      
+      |
+      <a href="_sources/http-api.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

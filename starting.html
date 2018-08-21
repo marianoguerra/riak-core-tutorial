@@ -1,0 +1,445 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Starting &#8212; Riak Core Tutorial 1.0 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Ping Command" href="ping-command.html" />
+    <link rel="prev" title="Setup" href="setup.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="starting">
+<h1>Starting<a class="headerlink" href="#starting" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="creating-our-project">
+<h2>Creating our Project<a class="headerlink" href="#creating-our-project" title="Permalink to this headline">¶</a></h2>
+<p>Now that we have our tools and our template installed we can start by asking
+rebar3 to create a new project we will call tanodb using the <a class="reference external" href="https://github.com/basho/riak_core">riak_core</a> template we just installed:</p>
+<div class="highlight-sh"><div class="highlight"><pre><span></span>rebar3 new rebar3_riak_core <span class="nv">name</span><span class="o">=</span>tanodb
+</pre></div>
+</div>
+<p>If it fails saying it can’t find rebar3 check that it’s in your <cite>$PATH</cite>
+environment variable and that you have Erlang activated.</p>
+<p>The output should be something like this:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">===&gt;</span> <span class="n">Writing</span> <span class="n">tanodb</span><span class="o">/</span><span class="n">apps</span><span class="o">/</span><span class="n">tanodb</span><span class="o">/</span><span class="n">src</span><span class="o">/</span><span class="n">tanodb</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">src</span>
+<span class="o">===&gt;</span> <span class="n">Writing</span> <span class="n">tanodb</span><span class="o">/</span><span class="n">apps</span><span class="o">/</span><span class="n">tanodb</span><span class="o">/</span><span class="n">src</span><span class="o">/</span><span class="n">tanodb</span><span class="o">.</span><span class="n">erl</span>
+<span class="o">===&gt;</span> <span class="n">Writing</span> <span class="n">tanodb</span><span class="o">/</span><span class="n">apps</span><span class="o">/</span><span class="n">tanodb</span><span class="o">/</span><span class="n">src</span><span class="o">/</span><span class="n">tanodb_app</span><span class="o">.</span><span class="n">erl</span>
+<span class="o">===&gt;</span> <span class="n">Writing</span> <span class="n">tanodb</span><span class="o">/</span><span class="n">apps</span><span class="o">/</span><span class="n">tanodb</span><span class="o">/</span><span class="n">src</span><span class="o">/</span><span class="n">tanodb_sup</span><span class="o">.</span><span class="n">erl</span>
+<span class="o">===&gt;</span> <span class="n">Writing</span> <span class="n">tanodb</span><span class="o">/</span><span class="n">apps</span><span class="o">/</span><span class="n">tanodb</span><span class="o">/</span><span class="n">src</span><span class="o">/</span><span class="n">tanodb_console</span><span class="o">.</span><span class="n">erl</span>
+<span class="o">===&gt;</span> <span class="n">Writing</span> <span class="n">tanodb</span><span class="o">/</span><span class="n">apps</span><span class="o">/</span><span class="n">tanodb</span><span class="o">/</span><span class="n">src</span><span class="o">/</span><span class="n">tanodb_vnode</span><span class="o">.</span><span class="n">erl</span>
+<span class="o">===&gt;</span> <span class="n">Writing</span> <span class="n">tanodb</span><span class="o">/</span><span class="n">rebar</span><span class="o">.</span><span class="n">config</span>
+<span class="o">===&gt;</span> <span class="n">Writing</span> <span class="n">tanodb</span><span class="o">/.</span><span class="n">editorconfig</span>
+<span class="o">===&gt;</span> <span class="n">Writing</span> <span class="n">tanodb</span><span class="o">/.</span><span class="n">gitignore</span>
+<span class="o">===&gt;</span> <span class="n">Writing</span> <span class="n">tanodb</span><span class="o">/</span><span class="n">README</span><span class="o">.</span><span class="n">rst</span>
+<span class="o">===&gt;</span> <span class="n">Writing</span> <span class="n">tanodb</span><span class="o">/</span><span class="n">Makefile</span>
+<span class="o">===&gt;</span> <span class="n">Writing</span> <span class="n">tanodb</span><span class="o">/</span><span class="n">config</span><span class="o">/</span><span class="n">admin_bin</span>
+<span class="o">===&gt;</span> <span class="n">Writing</span> <span class="n">tanodb</span><span class="o">/</span><span class="n">priv</span><span class="o">/</span><span class="mi">01</span><span class="o">-</span><span class="n">tanodb</span><span class="o">.</span><span class="n">schema</span>
+<span class="o">===&gt;</span> <span class="n">Writing</span> <span class="n">tanodb</span><span class="o">/</span><span class="n">config</span><span class="o">/</span><span class="n">advanced</span><span class="o">.</span><span class="n">config</span>
+<span class="o">===&gt;</span> <span class="n">Writing</span> <span class="n">tanodb</span><span class="o">/</span><span class="n">config</span><span class="o">/</span><span class="nb">vars</span><span class="o">.</span><span class="n">config</span>
+<span class="o">===&gt;</span> <span class="n">Writing</span> <span class="n">tanodb</span><span class="o">/</span><span class="n">config</span><span class="o">/</span><span class="n">vars_dev1</span><span class="o">.</span><span class="n">config</span>
+<span class="o">===&gt;</span> <span class="n">Writing</span> <span class="n">tanodb</span><span class="o">/</span><span class="n">config</span><span class="o">/</span><span class="n">vars_dev2</span><span class="o">.</span><span class="n">config</span>
+<span class="o">===&gt;</span> <span class="n">Writing</span> <span class="n">tanodb</span><span class="o">/</span><span class="n">config</span><span class="o">/</span><span class="n">vars_dev3</span><span class="o">.</span><span class="n">config</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p>The content of this chapter is in the <cite>01-template</cite> branch.</p>
+<p class="last"><a class="reference external" href="https://gitlab.com/marianoguerra/tanodb/tree/01-template">https://gitlab.com/marianoguerra/tanodb/tree/01-template</a></p>
+</div>
+</div>
+<div class="section" id="building-and-running">
+<h2>Building and Running<a class="headerlink" href="#building-and-running" title="Permalink to this headline">¶</a></h2>
+<p>Before explaining what the files mean so you get an idea what just happened
+let’s run it!</p>
+<div class="highlight-sh"><div class="highlight"><pre><span></span><span class="nb">cd</span> tanodb
+make
+make console
+</pre></div>
+</div>
+<p><cite>make</cite> runs rebar3 commands to build a release of our project, for that it uses a tool called <a class="reference external" href="https://github.com/erlware/relx">relx</a>.</p>
+<p>The initial build may take a while since it has to fetch all the dependencies
+and build them.</p>
+<p>After the release is built (you can check the result by inspecting the folder
+<cite>_build/default/rel/tanodb/</cite>) we can run it.</p>
+<p>When we run <cite>make console</cite> we get some noisy output that should end with something like this:</p>
+<div class="highlight-erl"><div class="highlight"><pre><span></span><span class="go">Eshell V9.2  (abort with ^G)</span>
+<span class="go">(tanodb@127.0.0.1)1&gt;</span>
+</pre></div>
+</div>
+<p>This is the Erlang shell, something like a REPL connected to our system,
+we now can test our system by calling <cite>tanodb:ping()</cite> on it.</p>
+<div class="highlight-erl"><div class="highlight"><pre><span></span><span class="go">(tanodb@127.0.0.1)1&gt; tanodb:ping().</span>
+<span class="go">{pong,1347321821914426127719021955160323408745312813056}</span>
+</pre></div>
+</div>
+<p>The response is the atom <cite>pong</cite> and a huge number that we will explain later,
+but to make it short, it’s the id of the process that replied to us.</p>
+</div>
+<div class="section" id="exploring-the-template-files">
+<h2>Exploring the Template Files<a class="headerlink" href="#exploring-the-template-files" title="Permalink to this headline">¶</a></h2>
+<p>The template created a lot of files and if you are like me, you don’t like things
+that make magic and don’t explain what’s going on, that’s why we will get a
+brief overview of the files created here.</p>
+<p>First this files are created:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">apps</span><span class="o">/</span><span class="n">tanodb</span><span class="o">/</span><span class="n">src</span><span class="o">/</span><span class="n">tanodb</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">src</span>
+<span class="n">apps</span><span class="o">/</span><span class="n">tanodb</span><span class="o">/</span><span class="n">src</span><span class="o">/</span><span class="n">tanodb</span><span class="o">.</span><span class="n">erl</span>
+<span class="n">apps</span><span class="o">/</span><span class="n">tanodb</span><span class="o">/</span><span class="n">src</span><span class="o">/</span><span class="n">tanodb_app</span><span class="o">.</span><span class="n">erl</span>
+<span class="n">apps</span><span class="o">/</span><span class="n">tanodb</span><span class="o">/</span><span class="n">src</span><span class="o">/</span><span class="n">tanodb_sup</span><span class="o">.</span><span class="n">erl</span>
+<span class="n">apps</span><span class="o">/</span><span class="n">tanodb</span><span class="o">/</span><span class="n">src</span><span class="o">/</span><span class="n">tanodb_console</span><span class="o">.</span><span class="n">erl</span>
+<span class="n">apps</span><span class="o">/</span><span class="n">tanodb</span><span class="o">/</span><span class="n">src</span><span class="o">/</span><span class="n">tanodb_vnode</span><span class="o">.</span><span class="n">erl</span>
+</pre></div>
+</div>
+<p>Those are the meat of this project, the source code we start with, if you
+know a little of erlang you will recognice many of them, let’s explain them briefly,
+if you think you need more information I recommend you this awesome book which
+you can read online: <a class="reference external" href="http://learnyousomeerlang.com/">Learn You Some Erlang for great good!</a></p>
+<dl class="docutils">
+<dt>tanodb.app.src</dt>
+<dd>This file is “The Application Resource File”, you can read it, it’s quite self descriptive.
+You can read more about it in the
+<a class="reference external" href="http://learnyousomeerlang.com/building-otp-applications">Building OTP Applications Section of Learn You Some Erlang</a>
+or in the <a class="reference external" href="http://www.erlang.org/doc/man/app.html">man page for app in the Erlang documentation</a>.</dd>
+<dt>tanodb.erl</dt>
+<dd>This file is the main API of our application, here we expose all the things
+you can ask our application to do, for now it can only handle the <cite>ping()</cite>
+command but we will add some more in the future.</dd>
+<dt>tanodb_app.erl</dt>
+<dd>This file implements the <a class="reference external" href="http://www.erlang.org/doc/design_principles/applications.html">application behavior</a> it’s a set of callbacks
+that the Erlang runtime calls to start and stop our application.</dd>
+<dt>tanodb_sup.erl</dt>
+<dd>This file implements the <a class="reference external" href="http://www.erlang.org/doc/design_principles/sup_princ.html">supervisor behavior</a> it’s a set of callbacks
+that the Erlang runtime calls to build the supervisor hierarchy.</dd>
+<dt>tanodb_console.erl</dt>
+<dd>This file is specific to riak_core, it’s a set of callbacks that will be
+called by the <cite>tanodb-admin</cite> command.</dd>
+<dt>tanodb_vnode.erl</dt>
+<dd>This file is specific to riak_core, it implements the riak_code_vnode
+behavior, which is a set of callbacks that riak_core will call to
+accomplish different tasks, it’s the main file we will edit to add new
+features.</dd>
+</dl>
+<p>Those were the source code files, but the template also created other files,
+let’s review them</p>
+<dl class="docutils">
+<dt>rebar.config</dt>
+<dd>This is the file that rebar3 reads to get information about our project
+like dependencies and build configuration, you can read more about it
+on the <a class="reference external" href="http://www.rebar3.org/docs/basic-usage">rebar3 documentation</a></dd>
+<dt>.editorconfig</dt>
+<dd>This file describes the coding style for this project, if your text editor
+understands editorconfig files then it will change it’s setting for this
+project to the ones described in this file, read more about editor config
+on the <a class="reference external" href="http://editorconfig.org/">editorconfig website</a></dd>
+<dt>.gitignore</dt>
+<dd>A file to tell git which files to ignore from the repository.</dd>
+<dt>README.rst</dt>
+<dd>The README of the project</dd>
+<dt>Makefile</dt>
+<dd>A make file with some targets that will make it easier to achieve some
+complex tasks without copying and pasting too much.</dd>
+<dt>config/admin_bin</dt>
+<dd>A template for the <cite>tanodb-admin</cite> command.</dd>
+<dt>priv/01-tanodb.schema</dt>
+<dd>The <a class="reference external" href="https://github.com/basho/cuttlefish/wiki">cuttlefish schema</a> file
+that describes what configuration our application supports, it starts with
+some example configuration fields that we will
+use as the application grows.</dd>
+<dt>config/advanced.config</dt>
+<dd>This file is where we configure some advanced things of our application
+that don’t go on our <cite>tanodb.config</cite> file, here we configure riak_core and
+our <a class="reference external" href="https://github.com/basho/lager/">logging library</a></dd>
+<dt>config/vars.config</dt>
+<dd>This file contains variables used by relx to build a release, you can
+read more about it in the <a class="reference external" href="http://www.rebar3.org/docs/releases">rebar3 release documentation</a></dd>
+</dl>
+<p>The following files are like vars.config but with slight differences to allow
+running more than one node on the same machine:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">config</span><span class="o">/</span><span class="n">vars_dev1</span><span class="o">.</span><span class="n">config</span>
+<span class="n">config</span><span class="o">/</span><span class="n">vars_dev2</span><span class="o">.</span><span class="n">config</span>
+<span class="n">config</span><span class="o">/</span><span class="n">vars_dev3</span><span class="o">.</span><span class="n">config</span>
+</pre></div>
+</div>
+<p>Normally when you have a cluster for your application one operating system
+instance runs one instance of your application and you have many operating
+system instances, but to test the clustering features of riak_core we will
+build 3 releases of our application using offsets for ports and changing the
+application name to avoid collisions.</p>
+<p>Those are all the files, follow the links to know more about them.</p>
+</div>
+<div class="section" id="playing-with-clustering">
+<h2>Playing with Clustering<a class="headerlink" href="#playing-with-clustering" title="Permalink to this headline">¶</a></h2>
+<p>Before starting to add features, let’s first play with clustering so we understand
+all those config files above work.</p>
+<p>Build 3 releases that can run on the same machine:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">make</span> <span class="n">devrel</span>
+</pre></div>
+</div>
+<p>This will build 3 releases of the application using different parameters (the
+dev1, dev2 and dev3 files we saw earlier) and will place them under:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">_build</span><span class="o">/</span><span class="n">dev1</span>
+<span class="n">_build</span><span class="o">/</span><span class="n">dev2</span>
+<span class="n">_build</span><span class="o">/</span><span class="n">dev3</span>
+</pre></div>
+</div>
+<p>This is achived by using the <a class="reference external" href="http://www.rebar3.org/docs/profiles">profiles feature from rebar3</a>.</p>
+<p>Now open 3 consoles and run the following commands one on each console:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">make</span> <span class="n">dev1</span><span class="o">-</span><span class="n">console</span>
+<span class="n">make</span> <span class="n">dev2</span><span class="o">-</span><span class="n">console</span>
+<span class="n">make</span> <span class="n">dev3</span><span class="o">-</span><span class="n">console</span>
+</pre></div>
+</div>
+<p>This will start the 3 nodes but they won’t know about each other, for them
+to know about each other we need to “join” them, that is to tell one of them
+about the other two, this is achieved using the tanodb-admin command, here is
+how you should run it manually (don’t run them):</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">_build</span><span class="o">/</span><span class="n">dev2</span><span class="o">/</span><span class="n">rel</span><span class="o">/</span><span class="n">tanodb</span><span class="o">/</span><span class="nb">bin</span><span class="o">/</span><span class="n">tanodb</span><span class="o">-</span><span class="n">admin</span> <span class="n">cluster</span> <span class="n">join</span> <span class="n">tanodb1</span><span class="nd">@127</span><span class="o">.</span><span class="mf">0.0</span><span class="o">.</span><span class="mi">1</span>
+<span class="n">_build</span><span class="o">/</span><span class="n">dev3</span><span class="o">/</span><span class="n">rel</span><span class="o">/</span><span class="n">tanodb</span><span class="o">/</span><span class="nb">bin</span><span class="o">/</span><span class="n">tanodb</span><span class="o">-</span><span class="n">admin</span> <span class="n">cluster</span> <span class="n">join</span> <span class="n">tanodb1</span><span class="nd">@127</span><span class="o">.</span><span class="mf">0.0</span><span class="o">.</span><span class="mi">1</span>
+</pre></div>
+</div>
+<p>We tell dev2 and dev3 to join tanodb1 (dev1), to make this easier and less
+error prone run the following command:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">make</span> <span class="n">devrel</span><span class="o">-</span><span class="n">join</span>
+</pre></div>
+</div>
+<p>Now let’s check the status of the cluster:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">make</span> <span class="n">devrel</span><span class="o">-</span><span class="n">status</span>
+</pre></div>
+</div>
+<p>You can read the Makefile to get an idea of what those commands do, in this case
+devrel-status does the following:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">_build</span><span class="o">/</span><span class="n">dev1</span><span class="o">/</span><span class="n">rel</span><span class="o">/</span><span class="n">tanodb</span><span class="o">/</span><span class="nb">bin</span><span class="o">/</span><span class="n">tanodb</span><span class="o">-</span><span class="n">admin</span> <span class="n">member</span><span class="o">-</span><span class="n">status</span>
+</pre></div>
+</div>
+<p>You should see something like this:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">=================================</span> <span class="n">Membership</span> <span class="o">===============</span>
+<span class="n">Status</span>     <span class="n">Ring</span>    <span class="n">Pending</span>    <span class="n">Node</span>
+<span class="o">------------------------------------------------------------</span>
+<span class="n">joining</span>     <span class="mf">0.0</span><span class="o">%</span>      <span class="o">--</span>      <span class="s1">&#39;tanodb2@127.0.0.1&#39;</span>
+<span class="n">joining</span>     <span class="mf">0.0</span><span class="o">%</span>      <span class="o">--</span>      <span class="s1">&#39;tanodb3@127.0.0.1&#39;</span>
+<span class="n">valid</span>     <span class="mf">100.0</span><span class="o">%</span>      <span class="o">--</span>      <span class="s1">&#39;tanodb1@127.0.0.1&#39;</span>
+<span class="o">------------------------------------------------------------</span>
+<span class="n">Valid</span><span class="p">:</span><span class="mi">1</span> <span class="o">/</span> <span class="n">Leaving</span><span class="p">:</span><span class="mi">0</span> <span class="o">/</span> <span class="n">Exiting</span><span class="p">:</span><span class="mi">0</span> <span class="o">/</span> <span class="n">Joining</span><span class="p">:</span><span class="mi">2</span> <span class="o">/</span> <span class="n">Down</span><span class="p">:</span><span class="mi">0</span>
+</pre></div>
+</div>
+<p>It should say that 3 nodes are joining, now check the cluster plan:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">make</span> <span class="n">devrel</span><span class="o">-</span><span class="n">cluster</span><span class="o">-</span><span class="n">plan</span>
+</pre></div>
+</div>
+<p>The output should be something like this:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">===============================</span> <span class="n">Staged</span> <span class="n">Changes</span> <span class="o">==============</span>
+<span class="n">Action</span>         <span class="n">Details</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+<span class="o">-------------------------------------------------------------</span>
+<span class="n">join</span>           <span class="s1">&#39;tanodb2@127.0.0.1&#39;</span>
+<span class="n">join</span>           <span class="s1">&#39;tanodb3@127.0.0.1&#39;</span>
+<span class="o">-------------------------------------------------------------</span>
+
+
+<span class="n">NOTE</span><span class="p">:</span> <span class="n">Applying</span> <span class="n">these</span> <span class="n">changes</span> <span class="n">will</span> <span class="n">result</span> <span class="ow">in</span> <span class="mi">1</span> <span class="n">cluster</span> <span class="n">transition</span>
+
+<span class="c1">#############################################################</span>
+                         <span class="n">After</span> <span class="n">cluster</span> <span class="n">transition</span> <span class="mi">1</span><span class="o">/</span><span class="mi">1</span>
+<span class="c1">#############################################################</span>
+
+<span class="o">=================================</span> <span class="n">Membership</span> <span class="o">================</span>
+<span class="n">Status</span>     <span class="n">Ring</span>    <span class="n">Pending</span>    <span class="n">Node</span>
+<span class="o">-------------------------------------------------------------</span>
+<span class="n">valid</span>     <span class="mf">100.0</span><span class="o">%</span>     <span class="mf">34.4</span><span class="o">%</span>    <span class="s1">&#39;tanodb1@127.0.0.1&#39;</span>
+<span class="n">valid</span>       <span class="mf">0.0</span><span class="o">%</span>     <span class="mf">32.8</span><span class="o">%</span>    <span class="s1">&#39;tanodb2@127.0.0.1&#39;</span>
+<span class="n">valid</span>       <span class="mf">0.0</span><span class="o">%</span>     <span class="mf">32.8</span><span class="o">%</span>    <span class="s1">&#39;tanodb3@127.0.0.1&#39;</span>
+<span class="o">-------------------------------------------------------------</span>
+<span class="n">Valid</span><span class="p">:</span><span class="mi">3</span> <span class="o">/</span> <span class="n">Leaving</span><span class="p">:</span><span class="mi">0</span> <span class="o">/</span> <span class="n">Exiting</span><span class="p">:</span><span class="mi">0</span> <span class="o">/</span> <span class="n">Joining</span><span class="p">:</span><span class="mi">0</span> <span class="o">/</span> <span class="n">Down</span><span class="p">:</span><span class="mi">0</span>
+
+<span class="n">WARNING</span><span class="p">:</span> <span class="n">Not</span> <span class="nb">all</span> <span class="n">replicas</span> <span class="n">will</span> <span class="n">be</span> <span class="n">on</span> <span class="n">distinct</span> <span class="n">nodes</span>
+
+<span class="n">Transfers</span> <span class="n">resulting</span> <span class="kn">from</span> <span class="nn">cluster</span> <span class="n">changes</span><span class="p">:</span> <span class="mi">42</span>
+  <span class="mi">21</span> <span class="n">transfers</span> <span class="kn">from</span> <span class="s1">&#39;tanodb1@127.0.0.1&#39;</span> <span class="n">to</span> <span class="s1">&#39;tanodb3@127.0.0.1&#39;</span>
+  <span class="mi">21</span> <span class="n">transfers</span> <span class="kn">from</span> <span class="s1">&#39;tanodb1@127.0.0.1&#39;</span> <span class="n">to</span> <span class="s1">&#39;tanodb2@127.0.0.1&#39;</span>
+</pre></div>
+</div>
+<p>Now we can commit the plan:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">make</span> <span class="n">devrel</span><span class="o">-</span><span class="n">cluster</span><span class="o">-</span><span class="n">commit</span>
+</pre></div>
+</div>
+<p>Which should say something like:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">Cluster</span> <span class="n">changes</span> <span class="n">committed</span>
+</pre></div>
+</div>
+<p>Now riak_core started an internal process to join the nodes to the cluster,
+this involve some complex processes that we will explore in the following
+chapters.</p>
+<p>You should see on the consoles where the nodes are running that some logging
+is happening describing the process.</p>
+<p>Check the status of the cluster again:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">make</span> <span class="n">devrel</span><span class="o">-</span><span class="n">status</span>
+</pre></div>
+</div>
+<p>You can see the vnodes transfering, this means the content of some virtual
+nodes on one tanodb node are being transferred to another tanodb node:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">=================================</span> <span class="n">Membership</span> <span class="o">=============</span>
+<span class="n">Status</span>     <span class="n">Ring</span>    <span class="n">Pending</span>    <span class="n">Node</span>
+<span class="o">----------------------------------------------------------</span>
+<span class="n">valid</span>      <span class="mf">75.0</span><span class="o">%</span>     <span class="mf">34.4</span><span class="o">%</span>    <span class="s1">&#39;tanodb1@127.0.0.1&#39;</span>
+<span class="n">valid</span>       <span class="mf">9.4</span><span class="o">%</span>     <span class="mf">32.8</span><span class="o">%</span>    <span class="s1">&#39;tanodb2@127.0.0.1&#39;</span>
+<span class="n">valid</span>       <span class="mf">7.8</span><span class="o">%</span>     <span class="mf">32.8</span><span class="o">%</span>    <span class="s1">&#39;tanodb3@127.0.0.1&#39;</span>
+<span class="o">----------------------------------------------------------</span>
+<span class="n">Valid</span><span class="p">:</span><span class="mi">3</span> <span class="o">/</span> <span class="n">Leaving</span><span class="p">:</span><span class="mi">0</span> <span class="o">/</span> <span class="n">Exiting</span><span class="p">:</span><span class="mi">0</span> <span class="o">/</span> <span class="n">Joining</span><span class="p">:</span><span class="mi">0</span> <span class="o">/</span> <span class="n">Down</span><span class="p">:</span><span class="mi">0</span>
+</pre></div>
+</div>
+<p>At some point you should see something like this, which means that the nodes
+are joined and balanced:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">=================================</span> <span class="n">Membership</span> <span class="o">==============</span>
+<span class="n">Status</span>     <span class="n">Ring</span>    <span class="n">Pending</span>    <span class="n">Node</span>
+<span class="o">-----------------------------------------------------------</span>
+<span class="n">valid</span>      <span class="mf">34.4</span><span class="o">%</span>      <span class="o">--</span>      <span class="s1">&#39;tanodb1@127.0.0.1&#39;</span>
+<span class="n">valid</span>      <span class="mf">32.8</span><span class="o">%</span>      <span class="o">--</span>      <span class="s1">&#39;tanodb2@127.0.0.1&#39;</span>
+<span class="n">valid</span>      <span class="mf">32.8</span><span class="o">%</span>      <span class="o">--</span>      <span class="s1">&#39;tanodb3@127.0.0.1&#39;</span>
+<span class="o">-----------------------------------------------------------</span>
+<span class="n">Valid</span><span class="p">:</span><span class="mi">3</span> <span class="o">/</span> <span class="n">Leaving</span><span class="p">:</span><span class="mi">0</span> <span class="o">/</span> <span class="n">Exiting</span><span class="p">:</span><span class="mi">0</span> <span class="o">/</span> <span class="n">Joining</span><span class="p">:</span><span class="mi">0</span> <span class="o">/</span> <span class="n">Down</span><span class="p">:</span><span class="mi">0</span>
+</pre></div>
+</div>
+<p>When you are bored you can stop them:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">make</span> <span class="n">devrel</span><span class="o">-</span><span class="n">stop</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="building-a-production-release">
+<h2>Building a Production Release<a class="headerlink" href="#building-a-production-release" title="Permalink to this headline">¶</a></h2>
+<p>Even when our application doesn’t have the features to merit a production
+release we are going to learn how to do it here since you can later do it at
+any step and get a full release of the app:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">make</span> <span class="n">prod</span><span class="o">-</span><span class="n">release</span>
+</pre></div>
+</div>
+<p>In that command rebar3 runs the release task using the prod profile, which has
+some configuration differences with the dev profiles we use so that it builds
+something we can unpack and run on another operating system without installing
+anything.</p>
+<p>Let’s package our release:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">cd</span> <span class="n">_build</span><span class="o">/</span><span class="n">prod</span><span class="o">/</span><span class="n">rel</span>
+<span class="n">tar</span> <span class="o">-</span><span class="n">czf</span> <span class="n">tanodb</span><span class="o">.</span><span class="n">tgz</span> <span class="n">tanodb</span> <span class="n">tanodb_config</span>
+<span class="n">cd</span> <span class="o">-</span>
+<span class="n">mv</span> <span class="n">_build</span><span class="o">/</span><span class="n">prod</span><span class="o">/</span><span class="n">rel</span><span class="o">/</span><span class="n">tanodb</span><span class="o">.</span><span class="n">tgz</span> <span class="o">.</span>
+</pre></div>
+</div>
+<p>You can copy it to a clean OS and run:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">tar</span> <span class="o">-</span><span class="n">xzf</span> <span class="n">tanodb</span><span class="o">.</span><span class="n">tgz</span>
+<span class="o">./</span><span class="n">tanodb</span><span class="o">/</span><span class="nb">bin</span><span class="o">/</span><span class="n">tanodb</span> <span class="n">console</span>
+</pre></div>
+</div>
+<p>And it runs!</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p>You should build the production release on the same operating system
+version you are intending to run it to avoid version problems, the
+main source of headaches are C extensions disagreeing on libc versions
+and similar.</p>
+<p class="last">So, even when you could build it on a version that is close and test
+it it’s better to build releases on the same version to avoid
+problems. More so if you are packaging the Erlang runtime with the
+release as we are doing here.</p>
+</div>
+</div>
+<div class="section" id="wrapping-up">
+<h2>Wrapping Up<a class="headerlink" href="#wrapping-up" title="Permalink to this headline">¶</a></h2>
+<p>Now you know how to create a riak_core app from a template, how to build a
+release and run it, how to build releases for a development cluster, run
+the nodes, join them and inspect the cluster status and how to build a
+production release and run it on a fresh server.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Starting</a><ul>
+<li><a class="reference internal" href="#creating-our-project">Creating our Project</a></li>
+<li><a class="reference internal" href="#building-and-running">Building and Running</a></li>
+<li><a class="reference internal" href="#exploring-the-template-files">Exploring the Template Files</a></li>
+<li><a class="reference internal" href="#playing-with-clustering">Playing with Clustering</a></li>
+<li><a class="reference internal" href="#building-a-production-release">Building a Production Release</a></li>
+<li><a class="reference internal" href="#wrapping-up">Wrapping Up</a></li>
+</ul>
+</li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="setup.html" title="previous chapter">Setup</a></li>
+      <li>Next: <a href="ping-command.html" title="next chapter">Ping Command</a></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/starting.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2018, Mariano Guerra.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.7</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.8</a>
+      
+      |
+      <a href="_sources/starting.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

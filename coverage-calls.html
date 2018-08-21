@@ -1,0 +1,250 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Coverage Calls &#8212; Riak Core Tutorial 1.0 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="HTTP API" href="http-api.html" />
+    <link rel="prev" title="Handoff" href="handoff.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="coverage-calls">
+<h1>Coverage Calls<a class="headerlink" href="#coverage-calls" title="Permalink to this headline">¶</a></h1>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p>The content of this chapter is in the <cite>05-coverage</cite> branch.</p>
+<p class="last"><a class="reference external" href="https://gitlab.com/marianoguerra/tanodb/tree/05-coverage">https://gitlab.com/marianoguerra/tanodb/tree/05-coverage</a></p>
+</div>
+<div class="section" id="how-it-works">
+<h2>How it Works<a class="headerlink" href="#how-it-works" title="Permalink to this headline">¶</a></h2>
+<p>Since bucket and key are hashed together to decide to which vnode a request
+will go it means that the keys for a given bucket may be distributed in
+multiple vnodes, and in case you are running in a cluster this means your keys
+are distributed in multiple physical nodes.</p>
+<p>This means that to list all the keys from a bucket we have to ask all the
+vnodes for the keys on a given bucket and then put the responses together and
+return the set of all responses.</p>
+<p>For this Riak Core provides something called coverage calls, which are a way to
+handle this process of running a command on all vnodes and gathering the
+responses.</p>
+<p>In this chapter we are going to implement the <cite>tanodb:keys(Bucket)</cite> function
+using coverage calls.</p>
+<p>In this case we call <cite>tanodb_coverage_fsm:start({keys, Bucket}, Timeout)</cite>, which
+is a new module, it implements a behavior called <cite>riak_core_coverage_fsm</cite>, short
+for riak_core_coverage <a class="reference external" href="https://en.wikipedia.org/wiki/Finite-state_machine">finite state machine</a>,
+it implements some predefined callbacks that are called on different states of
+a finite state machine.</p>
+<p>The start function calls <cite>tanodb_coverage_fsm_sup:start_fsm([ReqId, self(), Request, Timeout])</cite>
+which starts a supervisor for this new process.</p>
+<p>When we start the fsm with a command <cite>{keys, Bucket}</cite> and a timeout in
+milliseconds, it starts a supervisor that starts the finite state machine
+process, it first calls the init function which initializes the state of the
+process and returns some information to riak_core so it knows what kind of
+coverage call we want to do, then riak_core calls the handle_coverage function
+on each vnode and with each response it calls <cite>process_result</cite> in our process.</p>
+<p>When all the results are received or if an error happens (such as a timeout) it
+will call the finish callback there we send the results to the calling process
+which is waiting for it.</p>
+<p>The handle_coverage implementation is really simple, it uses the
+<a class="reference external" href="http://www.erlang.org/doc/man/ets.html#match-2">ets:match/2 function</a> to
+match against all the entries with the given bucket and returns the key from
+the matched results.</p>
+<p>You can read more about ets match specs in the
+<a class="reference external" href="http://www.erlang.org/doc/apps/erts/match_spec.html">match spec chapter on the Erlang documentation</a>.</p>
+</div>
+<div class="section" id="implementing-it">
+<h2>Implementing it<a class="headerlink" href="#implementing-it" title="Permalink to this headline">¶</a></h2>
+<p>Code in tanodb.erl is really simple:</p>
+<div class="highlight-erlang"><div class="highlight"><pre><span></span><span class="nf">keys</span><span class="p">(</span><span class="nv">Bucket</span><span class="p">,</span> <span class="nv">Opts</span><span class="p">)</span> <span class="o">-&gt;</span>
+    <span class="nv">Timeout</span> <span class="o">=</span> <span class="nn">maps</span><span class="p">:</span><span class="nb">get</span><span class="p">(</span><span class="n">timeout</span><span class="p">,</span> <span class="nv">Opts</span><span class="p">,</span> <span class="o">?</span><span class="nv">TIMEOUT</span><span class="p">),</span>
+    <span class="nn">tanodb_coverage_fsm</span><span class="p">:</span><span class="nf">start</span><span class="p">({</span><span class="n">keys</span><span class="p">,</span> <span class="nv">Bucket</span><span class="p">},</span> <span class="nv">Timeout</span><span class="p">).</span>
+</pre></div>
+</div>
+<p>In tanodb_vnode.erl we need to implement the handle_coverage callback:</p>
+<div class="highlight-erlang"><div class="highlight"><pre><span></span><span class="nf">handle_coverage</span><span class="p">({</span><span class="n">keys</span><span class="p">,</span> <span class="nv">Bucket</span><span class="p">},</span> <span class="p">_</span><span class="nv">KeySpaces</span><span class="p">,</span> <span class="p">{_,</span> <span class="nv">RefId</span><span class="p">,</span> <span class="p">_},</span>
+                <span class="nv">State</span><span class="o">=</span><span class="nl">#state</span><span class="p">{</span><span class="n">kv_state</span><span class="o">=</span><span class="nv">KvState</span><span class="p">})</span> <span class="o">-&gt;</span>
+    <span class="p">{</span><span class="nv">Keys</span><span class="p">,</span> <span class="nv">KvState1</span><span class="p">}</span> <span class="o">=</span> <span class="nn">tanodb_kv_ets</span><span class="p">:</span><span class="nf">keys</span><span class="p">(</span><span class="nv">KvState</span><span class="p">,</span> <span class="nv">Bucket</span><span class="p">),</span>
+    <span class="p">{</span><span class="n">reply</span><span class="p">,</span> <span class="p">{</span><span class="nv">RefId</span><span class="p">,</span> <span class="nv">Keys</span><span class="p">},</span> <span class="nv">State</span><span class="nl">#state</span><span class="p">{</span><span class="n">kv_state</span><span class="o">=</span><span class="nv">KvState1</span><span class="p">}};</span>
+</pre></div>
+</div>
+<p>We add two new modules:</p>
+<dl class="docutils">
+<dt>tanodb_coverage_fsm</dt>
+<dd>The FSM implementation for the coverage call.</dd>
+<dt>tanodb_coverage_fsm_sup</dt>
+<dd>The supervisor for the FSM processes.</dd>
+</dl>
+<p>We also add the tanodb_coverage_fsm_sup to the tanodb_sup supervisor tree.</p>
+</div>
+<div class="section" id="trying-it">
+<h2>Trying it<a class="headerlink" href="#trying-it" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-erlang"><div class="highlight"><pre><span></span><span class="nv">Nums</span> <span class="o">=</span> <span class="nn">lists</span><span class="p">:</span><span class="nf">seq</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">10</span><span class="p">).</span>
+<span class="nv">Buckets</span> <span class="o">=</span> <span class="nn">lists</span><span class="p">:</span><span class="nf">map</span><span class="p">(</span><span class="k">fun</span> <span class="p">(</span><span class="nv">N</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list_to_binary</span><span class="p">(</span><span class="s">&quot;bucket-&quot;</span> <span class="o">++</span> <span class="nb">integer_to_list</span><span class="p">(</span><span class="nv">N</span><span class="p">))</span> <span class="k">end</span><span class="p">,</span>
+<span class="nv">Nums</span><span class="p">).</span>
+<span class="nv">Keys</span> <span class="o">=</span> <span class="nn">lists</span><span class="p">:</span><span class="nf">map</span><span class="p">(</span><span class="k">fun</span> <span class="p">(</span><span class="nv">N</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list_to_binary</span><span class="p">(</span><span class="s">&quot;key-&quot;</span> <span class="o">++</span> <span class="nb">integer_to_list</span><span class="p">(</span><span class="nv">N</span><span class="p">))</span> <span class="k">end</span><span class="p">,</span> <span class="nv">Nums</span><span class="p">).</span>
+
+<span class="nv">GenValue</span> <span class="o">=</span> <span class="k">fun</span> <span class="p">(</span><span class="nv">Bucket</span><span class="p">,</span> <span class="nv">Key</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="p">[{</span><span class="n">bucket</span><span class="p">,</span> <span class="nv">Bucket</span><span class="p">},</span> <span class="p">{</span><span class="n">key</span><span class="p">,</span> <span class="nv">Key</span><span class="p">}]</span> <span class="k">end</span><span class="p">.</span>
+
+<span class="nn">lists</span><span class="p">:</span><span class="nf">foreach</span><span class="p">(</span><span class="k">fun</span> <span class="p">(</span><span class="nv">Bucket</span><span class="p">)</span> <span class="o">-&gt;</span>
+        <span class="nn">lists</span><span class="p">:</span><span class="nf">foreach</span><span class="p">(</span><span class="k">fun</span> <span class="p">(</span><span class="nv">Key</span><span class="p">)</span> <span class="o">-&gt;</span>
+                <span class="nv">Val</span> <span class="o">=</span> <span class="nv">GenValue</span><span class="p">(</span><span class="nv">Bucket</span><span class="p">,</span> <span class="nv">Key</span><span class="p">),</span>
+                <span class="nn">tanodb</span><span class="p">:</span><span class="nb">put</span><span class="p">(</span><span class="nv">Bucket</span><span class="p">,</span> <span class="nv">Key</span><span class="p">,</span> <span class="nv">Val</span><span class="p">)</span>
+        <span class="k">end</span><span class="p">,</span> <span class="nv">Keys</span><span class="p">)</span>
+<span class="k">end</span><span class="p">,</span> <span class="nv">Buckets</span><span class="p">).</span>
+
+<span class="p">{</span><span class="n">ok</span><span class="p">,</span> <span class="nv">Items</span><span class="p">}</span> <span class="o">=</span> <span class="nn">tanodb</span><span class="p">:</span><span class="nf">keys</span><span class="p">(</span><span class="o">&lt;&lt;</span><span class="s">&quot;bucket-1&quot;</span><span class="o">&gt;&gt;</span><span class="p">).</span>
+<span class="p">[{</span><span class="nv">Partition</span><span class="p">,</span> <span class="nv">Node</span><span class="p">,</span> <span class="nv">Keys</span><span class="p">}</span> <span class="p">||</span> <span class="p">{</span><span class="nv">Partition</span><span class="p">,</span> <span class="nv">Node</span><span class="p">,</span> <span class="nv">Keys</span><span class="p">}</span> <span class="o">&lt;-</span> <span class="nv">Items</span><span class="p">,</span> <span class="nv">Keys</span> <span class="o">=/=</span> <span class="p">[]].</span>
+</pre></div>
+</div>
+<div class="highlight-erlang"><div class="highlight"><pre><span></span><span class="p">[{</span><span class="mi">296867520082839655260123481645494988367611297792</span><span class="p">,</span>
+  <span class="n">&#39;tanodb@127.0.0.1&#39;</span><span class="p">,</span> <span class="p">[</span><span class="o">&lt;&lt;</span><span class="s">&quot;key-10&quot;</span><span class="o">&gt;&gt;</span><span class="p">]},</span>
+ <span class="p">{</span><span class="mi">365375409332725729550921208179070754913983135744</span><span class="p">,</span>
+  <span class="n">&#39;tanodb@127.0.0.1&#39;</span><span class="p">,</span> <span class="p">[</span><span class="o">&lt;&lt;</span><span class="s">&quot;key-4&quot;</span><span class="o">&gt;&gt;</span><span class="p">]},</span>
+ <span class="p">{</span><span class="mi">137015778499772148581595453067151533092743675904</span><span class="p">,</span>
+  <span class="n">&#39;tanodb@127.0.0.1&#39;</span><span class="p">,</span> <span class="p">[</span><span class="o">&lt;&lt;</span><span class="s">&quot;key-8&quot;</span><span class="o">&gt;&gt;</span><span class="p">]},</span>
+ <span class="p">{</span><span class="mi">707914855582156101004909840846949587645842325504</span><span class="p">,</span>
+  <span class="n">&#39;tanodb@127.0.0.1&#39;</span><span class="p">,</span> <span class="p">[</span><span class="o">&lt;&lt;</span><span class="s">&quot;key-9&quot;</span><span class="o">&gt;&gt;</span><span class="p">]},</span>
+ <span class="p">{</span><span class="mi">45671926166590716193865151022383844364247891968</span><span class="p">,</span>
+  <span class="n">&#39;tanodb@127.0.0.1&#39;</span><span class="p">,</span> <span class="p">[</span><span class="o">&lt;&lt;</span><span class="s">&quot;key-2&quot;</span><span class="o">&gt;&gt;</span><span class="p">]},</span>
+ <span class="p">{</span><span class="mi">753586781748746817198774991869333432010090217472</span><span class="p">,</span>
+  <span class="n">&#39;tanodb@127.0.0.1&#39;</span><span class="p">,</span> <span class="p">[</span><span class="o">&lt;&lt;</span><span class="s">&quot;key-9&quot;</span><span class="o">&gt;&gt;</span><span class="p">]},</span>
+ <span class="p">{</span><span class="mi">274031556999544297163190906134303066185487351808</span><span class="p">,</span>
+  <span class="n">&#39;tanodb@127.0.0.1&#39;</span><span class="p">,</span> <span class="p">[</span><span class="o">&lt;&lt;</span><span class="s">&quot;key-10&quot;</span><span class="o">&gt;&gt;</span><span class="p">]},</span>
+ <span class="p">{</span><span class="mi">822094670998632891489572718402909198556462055424</span><span class="p">,</span>
+  <span class="n">&#39;tanodb@127.0.0.1&#39;</span><span class="p">,</span> <span class="p">[</span><span class="o">&lt;&lt;</span><span class="s">&quot;key-5&quot;</span><span class="o">&gt;&gt;</span><span class="p">]},</span>
+ <span class="p">{</span><span class="mi">319703483166135013357056057156686910549735243776</span><span class="p">,</span>
+  <span class="n">&#39;tanodb@127.0.0.1&#39;</span><span class="p">,</span> <span class="p">[</span><span class="o">&lt;&lt;</span><span class="s">&quot;key-4&quot;</span><span class="o">&gt;&gt;</span><span class="p">,</span><span class="o">&lt;&lt;</span><span class="s">&quot;key-10&quot;</span><span class="o">&gt;&gt;</span><span class="p">]},</span>
+ <span class="p">{</span><span class="mi">342539446249430371453988632667878832731859189760</span><span class="p">,</span>
+  <span class="n">&#39;tanodb@127.0.0.1&#39;</span><span class="p">,</span> <span class="p">[</span><span class="o">&lt;&lt;</span><span class="s">&quot;key-4&quot;</span><span class="o">&gt;&gt;</span><span class="p">]},</span>
+ <span class="p">{</span><span class="mi">68507889249886074290797726533575766546371837952</span><span class="p">,</span>
+  <span class="n">&#39;tanodb@127.0.0.1&#39;</span><span class="p">,</span> <span class="p">[</span><span class="o">&lt;&lt;</span><span class="s">&quot;key-2&quot;</span><span class="o">&gt;&gt;</span><span class="p">]},</span>
+ <span class="p">{</span><span class="mi">799258707915337533392640142891717276374338109440</span><span class="p">,</span>
+  <span class="n">&#39;tanodb@127.0.0.1&#39;</span><span class="p">,</span> <span class="p">[</span><span class="o">&lt;&lt;</span><span class="s">&quot;key-5&quot;</span><span class="o">&gt;&gt;</span><span class="p">]},</span>
+ <span class="p">{</span><span class="mi">91343852333181432387730302044767688728495783936</span><span class="p">,</span>
+  <span class="n">&#39;tanodb@127.0.0.1&#39;</span><span class="p">,</span> <span class="p">[</span><span class="o">&lt;&lt;</span><span class="s">&quot;key-2&quot;</span><span class="o">&gt;&gt;</span><span class="p">]},</span>
+ <span class="p">{</span><span class="mi">730750818665451459101842416358141509827966271488</span><span class="p">,</span>
+  <span class="n">&#39;tanodb@127.0.0.1&#39;</span><span class="p">,</span> <span class="p">[</span><span class="o">&lt;&lt;</span><span class="s">&quot;key-9&quot;</span><span class="o">&gt;&gt;</span><span class="p">]},</span>
+ <span class="p">{</span><span class="mi">159851741583067506678528028578343455274867621888</span><span class="p">,</span>
+  <span class="n">&#39;tanodb@127.0.0.1&#39;</span><span class="p">,</span> <span class="p">[</span><span class="o">&lt;&lt;</span><span class="s">&quot;key-8&quot;</span><span class="o">&gt;&gt;</span><span class="p">]},</span>
+ <span class="p">{</span><span class="mi">182687704666362864775460604089535377456991567872</span><span class="p">,</span>
+  <span class="n">&#39;tanodb@127.0.0.1&#39;</span><span class="p">,</span> <span class="p">[</span><span class="o">&lt;&lt;</span><span class="s">&quot;key-8&quot;</span><span class="o">&gt;&gt;</span><span class="p">]},</span>
+ <span class="p">{</span><span class="mi">844930634081928249586505293914101120738586001408</span><span class="p">,</span>
+  <span class="n">&#39;tanodb@127.0.0.1&#39;</span><span class="p">,</span> <span class="p">[</span><span class="o">&lt;&lt;</span><span class="s">&quot;key-5&quot;</span><span class="o">&gt;&gt;</span><span class="p">]},</span>
+ <span class="p">{</span><span class="mi">867766597165223607683437869425293042920709947392</span><span class="p">,</span>
+  <span class="n">&#39;tanodb@127.0.0.1&#39;</span><span class="p">,</span> <span class="p">[</span><span class="o">&lt;&lt;</span><span class="s">&quot;key-3&quot;</span><span class="o">&gt;&gt;</span><span class="p">]},</span>
+ <span class="p">{</span><span class="mi">890602560248518965780370444936484965102833893376</span><span class="p">,</span>
+  <span class="n">&#39;tanodb@127.0.0.1&#39;</span><span class="p">,</span> <span class="p">[</span><span class="o">&lt;&lt;</span><span class="s">&quot;key-3&quot;</span><span class="o">&gt;&gt;</span><span class="p">]},</span>
+ <span class="p">{</span><span class="mi">1050454301831586472458898473514828420377701515264</span><span class="p">,</span>
+  <span class="n">&#39;tanodb@127.0.0.1&#39;</span><span class="p">,</span> <span class="p">[</span><span class="o">&lt;&lt;</span><span class="s">&quot;key-6&quot;</span><span class="o">&gt;&gt;</span><span class="p">]},</span>
+ <span class="p">{</span><span class="mi">913438523331814323877303020447676887284957839360</span><span class="p">,</span>
+  <span class="n">&#39;tanodb@127.0.0.1&#39;</span><span class="p">,</span> <span class="p">[</span><span class="o">&lt;&lt;</span><span class="s">&quot;key-3&quot;</span><span class="o">&gt;&gt;</span><span class="p">]},</span>
+ <span class="p">{</span><span class="mi">1118962191081472546749696200048404186924073353216</span><span class="p">,</span>
+  <span class="n">&#39;tanodb@127.0.0.1&#39;</span><span class="p">,</span> <span class="p">[</span><span class="o">&lt;&lt;</span><span class="s">&quot;key-7&quot;</span><span class="o">&gt;&gt;</span><span class="p">,</span><span class="o">&lt;&lt;</span><span class="s">&quot;key-1&quot;</span><span class="o">&gt;&gt;</span><span class="p">]},</span>
+ <span class="p">{</span><span class="mi">1164634117248063262943561351070788031288321245184</span><span class="p">,</span>
+  <span class="n">&#39;tanodb@127.0.0.1&#39;</span><span class="p">,</span> <span class="p">[</span><span class="o">&lt;&lt;</span><span class="s">&quot;key-7&quot;</span><span class="o">&gt;&gt;</span><span class="p">]},</span>
+ <span class="p">{</span><span class="mi">1027618338748291114361965898003636498195577569280</span><span class="p">,</span>
+  <span class="n">&#39;tanodb@127.0.0.1&#39;</span><span class="p">,</span> <span class="p">[</span><span class="o">&lt;&lt;</span><span class="s">&quot;key-&quot;</span><span class="p">...</span><span class="o">&gt;&gt;</span><span class="p">]},</span>
+ <span class="p">{</span><span class="mi">1096126227998177188652763624537212264741949407232</span><span class="p">,</span>
+  <span class="n">&#39;tanodb@127.0.0.1&#39;</span><span class="p">,</span> <span class="p">[</span><span class="o">&lt;&lt;</span><span class="p">...</span><span class="o">&gt;&gt;</span><span class="p">]},</span>
+ <span class="p">{</span><span class="mi">1073290264914881830555831049026020342559825461248</span><span class="p">,</span>
+  <span class="n">&#39;tanodb@127.0.0.1&#39;</span><span class="p">,</span> <span class="p">[...]},</span>
+ <span class="p">{</span><span class="mi">1141798154164767904846628775559596109106197299200</span><span class="p">,</span>
+  <span class="n">&#39;tanodb@127.0.0.1&#39;</span><span class="p">,...}]</span>
+</pre></div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Coverage Calls</a><ul>
+<li><a class="reference internal" href="#how-it-works">How it Works</a></li>
+<li><a class="reference internal" href="#implementing-it">Implementing it</a></li>
+<li><a class="reference internal" href="#trying-it">Trying it</a></li>
+</ul>
+</li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="handoff.html" title="previous chapter">Handoff</a></li>
+      <li>Next: <a href="http-api.html" title="next chapter">HTTP API</a></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/coverage-calls.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2018, Mariano Guerra.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.7</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.8</a>
+      
+      |
+      <a href="_sources/coverage-calls.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

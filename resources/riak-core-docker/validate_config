@@ -1,0 +1,11 @@
+#!/usr/bin/env escript
+%% -*- erlang -*-
+%%! -smp enable -sname validate
+main(Args) ->
+    lists:map(
+        fun(CfgFile) ->
+            io:format("validating: ~s ..", [CfgFile]),
+            {ok, _} = file:consult(CfgFile),
+            io:format("..ok~n")
+        end, Args).
+

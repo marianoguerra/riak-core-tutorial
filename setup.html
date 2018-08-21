@@ -1,0 +1,327 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Setup &#8212; Riak Core Tutorial 1.0 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Starting" href="starting.html" />
+    <link rel="prev" title="Riak Core Tutorial" href="index.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="setup">
+<h1>Setup<a class="headerlink" href="#setup" title="Permalink to this headline">¶</a></h1>
+<p>We first need to have Erlang installed and rebar3 installed.</p>
+<div class="section" id="the-easy-way">
+<h2>The Easy Way<a class="headerlink" href="#the-easy-way" title="Permalink to this headline">¶</a></h2>
+<p>If you don’t have Erlang installed or you don’t have problem to install the
+latest one system wide you can try installing it with your package manager:</p>
+<ul class="simple">
+<li>For Homebrew on OS X: <cite>brew install erlang</cite></li>
+<li>For MacPorts on OS X: <cite>port install erlang</cite></li>
+<li>For Ubuntu and Debian: <cite>apt-get install erlang</cite></li>
+<li>For Fedora: <cite>yum install erlang</cite></li>
+<li>For FreeBSD: <cite>pkg install erlang</cite></li>
+</ul>
+<p>Please check that the package version is 20.x, if not, check for instructions
+on how to install the Erlang Solutions package for Ubuntu, CentOS, Mac OS X, Debian or Fedora here: <a class="reference external" href="https://www.erlang-solutions.com/resources/download.html">https://www.erlang-solutions.com/resources/download.html</a></p>
+</div>
+<div class="section" id="setting-up-rebar3">
+<h2>Setting up rebar3<a class="headerlink" href="#setting-up-rebar3" title="Permalink to this headline">¶</a></h2>
+<p>Now we have Erlang, we need a build tool, we are going to use <a class="reference external" href="http://rebar3.org">rebar3</a>:</p>
+<div class="code sh highlight-default"><div class="highlight"><pre><span></span># download rebar3 to our bin directory
+wget https://s3.amazonaws.com/rebar3/rebar3 -O $HOME/bin/rebar3
+
+# set execution permissions for our user
+chmod u+x rebar3
+</pre></div>
+</div>
+<p>Just in case you have problems running the rebar3 commands with a different
+version, here’s the version I’m using:</p>
+<div class="code sh highlight-default"><div class="highlight"><pre><span></span><span class="n">rebar3</span> <span class="n">version</span>
+</pre></div>
+</div>
+<p>Output:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">rebar</span> <span class="mf">3.5</span><span class="o">.</span><span class="mi">0</span> <span class="n">on</span> <span class="n">Erlang</span><span class="o">/</span><span class="n">OTP</span> <span class="mi">20</span> <span class="n">Erts</span> <span class="mf">9.2</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="install-riak-core-rebar3-template">
+<h2>Install Riak Core Rebar3 Template<a class="headerlink" href="#install-riak-core-rebar3-template" title="Permalink to this headline">¶</a></h2>
+<p>To create a Riak Core project from scratch we will use a template called <a class="reference external" href="https://github.com/marianoguerra/rebar3_template_riak_core/">rebar3_template_riak_core</a>.</p>
+<p>we need to clone its repo in a place where rebar3 can see it:</p>
+<div class="code sh highlight-default"><div class="highlight"><pre><span></span><span class="n">mkdir</span> <span class="o">-</span><span class="n">p</span> <span class="o">~/.</span><span class="n">config</span><span class="o">/</span><span class="n">rebar3</span><span class="o">/</span><span class="n">templates</span>
+<span class="n">git</span> <span class="n">clone</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">marianoguerra</span><span class="o">/</span><span class="n">rebar3_template_riak_core</span><span class="o">.</span><span class="n">git</span> <span class="o">~/.</span><span class="n">config</span><span class="o">/</span><span class="n">rebar3</span><span class="o">/</span><span class="n">templates</span><span class="o">/</span><span class="n">rebar3_template_riak_core</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="the-hard-way-building-erlang-with-kerl">
+<h2>The Hard Way: Building Erlang with kerl<a class="headerlink" href="#the-hard-way-building-erlang-with-kerl" title="Permalink to this headline">¶</a></h2>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">If you installed Erlang with the instructions above, skip until the
+<em>Test that Everything Works</em> section below.</p>
+</div>
+<p>If you have or want to have more than one version running side by side you can
+use <a class="reference external" href="https://github.com/kerl/kerl">kerl</a>, from its github README:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">Easy</span> <span class="n">building</span> <span class="ow">and</span> <span class="n">installing</span> <span class="n">of</span> <span class="n">Erlang</span><span class="o">/</span><span class="n">OTP</span> <span class="n">instances</span><span class="o">.</span>
+
+<span class="n">Kerl</span> <span class="n">aims</span> <span class="n">to</span> <span class="n">be</span> <span class="n">shell</span> <span class="n">agnostic</span> <span class="ow">and</span> <span class="n">its</span> <span class="n">only</span> <span class="n">dependencies</span><span class="p">,</span> <span class="n">excluding</span> <span class="n">what</span><span class="s1">&#39;s</span>
+<span class="n">required</span> <span class="n">to</span> <span class="n">actually</span> <span class="n">build</span> <span class="n">Erlang</span><span class="o">/</span><span class="n">OTP</span><span class="p">,</span> <span class="n">are</span> <span class="n">curl</span> <span class="ow">and</span> <span class="n">git</span><span class="o">.</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">On Mac you can install it with homebrew: <cite>brew install kerl</cite></p>
+</div>
+<p>First we need to fetch kerl:</p>
+<div class="code sh highlight-default"><div class="highlight"><pre><span></span><span class="c1"># create bin folder in our home directory if it&#39;s not already there</span>
+<span class="n">mkdir</span> <span class="o">-</span><span class="n">p</span> <span class="o">~/</span><span class="nb">bin</span>
+
+<span class="c1"># cd to it</span>
+<span class="n">cd</span> <span class="o">~/</span><span class="nb">bin</span>
+
+<span class="c1"># download kerl script</span>
+<span class="n">curl</span> <span class="o">-</span><span class="n">O</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">raw</span><span class="o">.</span><span class="n">githubusercontent</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">kerl</span><span class="o">/</span><span class="n">kerl</span><span class="o">/</span><span class="n">master</span><span class="o">/</span><span class="n">kerl</span>
+
+<span class="c1"># set execution permitions for our user</span>
+<span class="n">chmod</span> <span class="n">u</span><span class="o">+</span><span class="n">x</span> <span class="n">kerl</span>
+</pre></div>
+</div>
+<p>You will need to add ~/bin to your PATH variable so your shell can find the
+kerl script, you can do it like this in your shell:</p>
+<div class="code sh highlight-default"><div class="highlight"><pre><span></span># set the PATH environment variable to the value it had before plus a colon
+# (path separator) and a new path which points to the bin folder we just
+# created
+PATH=$PATH:$HOME/bin
+</pre></div>
+</div>
+<p>If you want to make this work every time you start a shell you need to put it
+it the rc file of your shell of choice, for bash it’s ~/.bashrc, for zsh it’s
+~/.zshrc, you will have to add a line like this:</p>
+<div class="code sh highlight-default"><div class="highlight"><pre><span></span>export PATH=$PATH:$HOME/bin
+</pre></div>
+</div>
+<p>After this, start a new shell or source your rc file so that it picks up your
+new PATH variable, you can check that it’s set correctly by running:</p>
+<div class="code sh highlight-default"><div class="highlight"><pre><span></span>echo $PATH
+</pre></div>
+</div>
+<p>And checking in the output if $HOME/bin is there (notice that $HOME will be
+expanded to the actual path).</p>
+</div>
+<div class="section" id="building-an-erlang-release-with-kerl">
+<h2>Building an Erlang release with kerl<a class="headerlink" href="#building-an-erlang-release-with-kerl" title="Permalink to this headline">¶</a></h2>
+<p>We have kerl installed and available in our shell, now we need to build an
+Erlang release of our choice, for this we will need a compiler and other
+tools and libraries needed to compile it:</p>
+<p>This are instructions on ubuntu 17.10, check the names for those packages
+on your distribution.</p>
+<div class="code sh highlight-default"><div class="highlight"><pre><span></span><span class="c1"># required: basic tools and libraries needed</span>
+<span class="c1"># (compiler, curses for the shell, ssl for crypto)</span>
+<span class="n">sudo</span> <span class="n">apt</span><span class="o">-</span><span class="n">get</span> <span class="o">-</span><span class="n">y</span> <span class="n">install</span> <span class="n">build</span><span class="o">-</span><span class="n">essential</span> <span class="n">m4</span> <span class="n">libncurses5</span><span class="o">-</span><span class="n">dev</span> <span class="n">libssl</span><span class="o">-</span><span class="n">dev</span>
+
+<span class="c1"># optonal: if you want odbc support (database connectivity)</span>
+<span class="n">sudo</span> <span class="n">apt</span><span class="o">-</span><span class="n">get</span> <span class="n">install</span> <span class="n">unixodbc</span><span class="o">-</span><span class="n">dev</span>
+
+<span class="c1"># optonal: if you want pdf docs you need apache fop and xslt tools and java (fop is a java project)</span>
+<span class="n">sudo</span> <span class="n">apt</span><span class="o">-</span><span class="n">get</span> <span class="n">install</span> <span class="o">-</span><span class="n">y</span> <span class="n">fop</span> <span class="n">xsltproc</span> <span class="n">default</span><span class="o">-</span><span class="n">jdk</span>
+
+<span class="c1"># optional: if you want to build jinterface you need a JDK</span>
+<span class="n">sudo</span> <span class="n">apt</span><span class="o">-</span><span class="n">get</span> <span class="n">install</span> <span class="o">-</span><span class="n">y</span> <span class="n">default</span><span class="o">-</span><span class="n">jdk</span>
+
+<span class="c1"># optional: if you want wx (desktop GUI modules)</span>
+<span class="n">sudo</span> <span class="n">apt</span><span class="o">-</span><span class="n">get</span> <span class="n">install</span> <span class="o">-</span><span class="n">y</span> <span class="n">libwxgtk3</span><span class="o">.</span><span class="mi">0</span><span class="o">-</span><span class="n">dev</span>
+</pre></div>
+</div>
+<p>Now that we have everything we need we can finally build our Erlang release.</p>
+<p>First we fetch an updated list of releases:</p>
+<div class="code sh highlight-default"><div class="highlight"><pre><span></span><span class="n">kerl</span> <span class="n">update</span> <span class="n">releases</span>
+</pre></div>
+</div>
+<p>The output in my case:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">The</span> <span class="n">available</span> <span class="n">releases</span> <span class="n">are</span><span class="p">:</span>
+
+<span class="n">R10B</span><span class="o">-</span><span class="mi">0</span> <span class="n">R10B</span><span class="o">-</span><span class="mi">10</span> <span class="n">R10B</span><span class="o">-</span><span class="mi">1</span><span class="n">a</span> <span class="n">R10B</span><span class="o">-</span><span class="mi">2</span> <span class="n">R10B</span><span class="o">-</span><span class="mi">3</span> <span class="n">R10B</span><span class="o">-</span><span class="mi">4</span> <span class="n">R10B</span><span class="o">-</span><span class="mi">5</span> <span class="n">R10B</span><span class="o">-</span><span class="mi">6</span> <span class="n">R10B</span><span class="o">-</span><span class="mi">7</span> <span class="n">R10B</span><span class="o">-</span><span class="mi">8</span>
+<span class="n">R10B</span><span class="o">-</span><span class="mi">9</span> <span class="n">R11B</span><span class="o">-</span><span class="mi">0</span> <span class="n">R11B</span><span class="o">-</span><span class="mi">1</span> <span class="n">R11B</span><span class="o">-</span><span class="mi">2</span> <span class="n">R11B</span><span class="o">-</span><span class="mi">3</span> <span class="n">R11B</span><span class="o">-</span><span class="mi">4</span> <span class="n">R11B</span><span class="o">-</span><span class="mi">5</span> <span class="n">R12B</span><span class="o">-</span><span class="mi">0</span> <span class="n">R12B</span><span class="o">-</span><span class="mi">1</span> <span class="n">R12B</span><span class="o">-</span><span class="mi">2</span> <span class="n">R12B</span><span class="o">-</span><span class="mi">3</span>
+<span class="n">R12B</span><span class="o">-</span><span class="mi">4</span> <span class="n">R12B</span><span class="o">-</span><span class="mi">5</span> <span class="n">R13A</span> <span class="n">R13B01</span> <span class="n">R13B02</span><span class="o">-</span><span class="mi">1</span> <span class="n">R13B02</span> <span class="n">R13B03</span> <span class="n">R13B04</span> <span class="n">R13B</span> <span class="n">R14A</span> <span class="n">R14B01</span>
+<span class="n">R14B02</span> <span class="n">R14B03</span> <span class="n">R14B04</span> <span class="n">R14B_erts</span><span class="o">-</span><span class="mf">5.8</span><span class="o">.</span><span class="mf">1.1</span> <span class="n">R14B</span> <span class="n">R15B01</span> <span class="n">R15B02</span>
+<span class="n">R15B02_with_MSVCR100_installer_fix</span> <span class="n">R15B03</span><span class="o">-</span><span class="mi">1</span> <span class="n">R15B03</span> <span class="n">R15B</span>
+<span class="n">R16A_RELEASE_CANDIDATE</span> <span class="n">R16B01</span> <span class="n">R16B02</span> <span class="n">R16B03</span><span class="o">-</span><span class="mi">1</span> <span class="n">R16B03</span> <span class="n">R16B</span> <span class="mf">17.0</span><span class="o">-</span><span class="n">rc1</span> <span class="mf">17.0</span><span class="o">-</span><span class="n">rc2</span>
+<span class="mf">17.0</span> <span class="mf">17.1</span> <span class="mf">17.3</span> <span class="mf">17.4</span> <span class="mf">17.5</span> <span class="mf">18.0</span> <span class="mf">18.1</span> <span class="mf">18.2</span><span class="o">.</span><span class="mi">1</span> <span class="mf">18.2</span> <span class="mf">18.3</span> <span class="mf">19.0</span> <span class="mf">19.1</span> <span class="mf">19.2</span> <span class="mf">19.3</span>
+<span class="mf">20.0</span> <span class="mf">20.1</span> <span class="mf">20.2</span>
+</pre></div>
+</div>
+<p>Let’s build the 20.2 version:</p>
+<div class="code sh highlight-default"><div class="highlight"><pre><span></span><span class="c1"># this will take a while</span>
+<span class="n">kerl</span> <span class="n">build</span> <span class="mf">20.2</span> <span class="mf">20.2</span>
+</pre></div>
+</div>
+<p>And install it:</p>
+<div class="code sh highlight-default"><div class="highlight"><pre><span></span><span class="n">kerl</span> <span class="n">install</span> <span class="mf">20.2</span> <span class="o">~/</span><span class="nb">bin</span><span class="o">/</span><span class="n">erl</span><span class="o">-</span><span class="mf">20.2</span>
+</pre></div>
+</div>
+<p>Now everytime we want to use this version of Erlang we need to run:</p>
+<div class="code sh highlight-default"><div class="highlight"><pre><span></span>. $HOME/bin/erl-20.2/activate
+</pre></div>
+</div>
+</div>
+<div class="section" id="test-that-everything-works">
+<h2>Test that Everything Works<a class="headerlink" href="#test-that-everything-works" title="Permalink to this headline">¶</a></h2>
+<p>We have installed several tools:</p>
+<dl class="docutils">
+<dt>kerl</dt>
+<dd>Let’s you install multiple Erlang releases that can live side by side</dd>
+<dt>Erlang 20.2</dt>
+<dd>The version of erlang we are going to be using</dd>
+<dt>Rebar 3</dt>
+<dd>Our build tool</dd>
+<dt>rebar3_template_riak_core</dt>
+<dd>Rebar 3 Template that will make it easy to setup fresh riak_core projects
+for experimentation</dd>
+</dl>
+<p>Now we need to check that everything is setup correctly, we will do that by
+creating a template and building it.</p>
+<p>Remember to have $HOME/bin in your $PATH and Erlang 20.2 activated, <cite>cd</cite> to a folder of your choice to hold this project and run:</p>
+<div class="code sh highlight-default"><div class="highlight"><pre><span></span><span class="n">rebar3</span> <span class="n">new</span> <span class="n">rebar3_riak_core</span> <span class="n">name</span><span class="o">=</span><span class="n">akv</span>
+</pre></div>
+</div>
+<p>Output should be similar to this one:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">===&gt;</span> <span class="n">Writing</span> <span class="n">akv</span><span class="o">/</span><span class="n">apps</span><span class="o">/</span><span class="n">akv</span><span class="o">/</span><span class="n">src</span><span class="o">/</span><span class="n">akv</span><span class="o">.</span><span class="n">app</span><span class="o">.</span><span class="n">src</span>
+<span class="o">===&gt;</span> <span class="n">Writing</span> <span class="n">akv</span><span class="o">/</span><span class="n">apps</span><span class="o">/</span><span class="n">akv</span><span class="o">/</span><span class="n">src</span><span class="o">/</span><span class="n">akv</span><span class="o">.</span><span class="n">erl</span>
+<span class="o">===&gt;</span> <span class="n">Writing</span> <span class="n">akv</span><span class="o">/</span><span class="n">apps</span><span class="o">/</span><span class="n">akv</span><span class="o">/</span><span class="n">src</span><span class="o">/</span><span class="n">akv_app</span><span class="o">.</span><span class="n">erl</span>
+<span class="o">===&gt;</span> <span class="n">Writing</span> <span class="n">akv</span><span class="o">/</span><span class="n">apps</span><span class="o">/</span><span class="n">akv</span><span class="o">/</span><span class="n">src</span><span class="o">/</span><span class="n">akv_sup</span><span class="o">.</span><span class="n">erl</span>
+<span class="o">===&gt;</span> <span class="n">Writing</span> <span class="n">akv</span><span class="o">/</span><span class="n">apps</span><span class="o">/</span><span class="n">akv</span><span class="o">/</span><span class="n">src</span><span class="o">/</span><span class="n">akv_console</span><span class="o">.</span><span class="n">erl</span>
+<span class="o">===&gt;</span> <span class="n">Writing</span> <span class="n">akv</span><span class="o">/</span><span class="n">apps</span><span class="o">/</span><span class="n">akv</span><span class="o">/</span><span class="n">src</span><span class="o">/</span><span class="n">akv_vnode</span><span class="o">.</span><span class="n">erl</span>
+<span class="o">===&gt;</span> <span class="n">Writing</span> <span class="n">akv</span><span class="o">/</span><span class="n">rebar</span><span class="o">.</span><span class="n">config</span>
+<span class="o">===&gt;</span> <span class="n">Writing</span> <span class="n">akv</span><span class="o">/.</span><span class="n">editorconfig</span>
+<span class="o">===&gt;</span> <span class="n">Writing</span> <span class="n">akv</span><span class="o">/.</span><span class="n">gitignore</span>
+<span class="o">===&gt;</span> <span class="n">Writing</span> <span class="n">akv</span><span class="o">/</span><span class="n">README</span><span class="o">.</span><span class="n">rst</span>
+<span class="o">===&gt;</span> <span class="n">Writing</span> <span class="n">akv</span><span class="o">/</span><span class="n">Makefile</span>
+<span class="o">===&gt;</span> <span class="n">Writing</span> <span class="n">akv</span><span class="o">/</span><span class="n">config</span><span class="o">/</span><span class="n">admin_bin</span>
+<span class="o">===&gt;</span> <span class="n">Writing</span> <span class="n">akv</span><span class="o">/</span><span class="n">priv</span><span class="o">/</span><span class="mi">01</span><span class="o">-</span><span class="n">akv</span><span class="o">.</span><span class="n">schema</span>
+<span class="o">===&gt;</span> <span class="n">Writing</span> <span class="n">akv</span><span class="o">/</span><span class="n">config</span><span class="o">/</span><span class="n">advanced</span><span class="o">.</span><span class="n">config</span>
+<span class="o">===&gt;</span> <span class="n">Writing</span> <span class="n">akv</span><span class="o">/</span><span class="n">config</span><span class="o">/</span><span class="nb">vars</span><span class="o">.</span><span class="n">config</span>
+<span class="o">===&gt;</span> <span class="n">Writing</span> <span class="n">akv</span><span class="o">/</span><span class="n">config</span><span class="o">/</span><span class="n">vars_dev1</span><span class="o">.</span><span class="n">config</span>
+<span class="o">===&gt;</span> <span class="n">Writing</span> <span class="n">akv</span><span class="o">/</span><span class="n">config</span><span class="o">/</span><span class="n">vars_dev2</span><span class="o">.</span><span class="n">config</span>
+<span class="o">===&gt;</span> <span class="n">Writing</span> <span class="n">akv</span><span class="o">/</span><span class="n">config</span><span class="o">/</span><span class="n">vars_dev3</span><span class="o">.</span><span class="n">config</span>
+</pre></div>
+</div>
+<p>Now let’s try to build it:</p>
+<div class="code sh highlight-default"><div class="highlight"><pre><span></span><span class="n">cd</span> <span class="n">akv</span>
+<span class="n">make</span>
+</pre></div>
+</div>
+<p>Output is to long to list, after it ends, near the end you should see this line:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span>===&gt; release successfully created!
+</pre></div>
+</div>
+<p>Now let’s try to run it:</p>
+<div class="code sh highlight-default"><div class="highlight"><pre><span></span><span class="n">make</span> <span class="n">console</span>
+</pre></div>
+</div>
+<p>Last lines should be:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">Eshell</span> <span class="n">V9</span><span class="o">.</span><span class="mi">2</span>  <span class="p">(</span><span class="n">abort</span> <span class="k">with</span> <span class="o">^</span><span class="n">G</span><span class="p">)</span>
+<span class="p">(</span><span class="n">akv</span><span class="nd">@127</span><span class="o">.</span><span class="mf">0.0</span><span class="o">.</span><span class="mi">1</span><span class="p">)</span><span class="mi">1</span><span class="o">&gt;</span>
+</pre></div>
+</div>
+<p>You can exit with <cite>q().</cite> and pressing enter or hitting Ctrl-C twice.</p>
+<p>We’re ready to start!</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Setup</a><ul>
+<li><a class="reference internal" href="#the-easy-way">The Easy Way</a></li>
+<li><a class="reference internal" href="#setting-up-rebar3">Setting up rebar3</a></li>
+<li><a class="reference internal" href="#install-riak-core-rebar3-template">Install Riak Core Rebar3 Template</a></li>
+<li><a class="reference internal" href="#the-hard-way-building-erlang-with-kerl">The Hard Way: Building Erlang with kerl</a></li>
+<li><a class="reference internal" href="#building-an-erlang-release-with-kerl">Building an Erlang release with kerl</a></li>
+<li><a class="reference internal" href="#test-that-everything-works">Test that Everything Works</a></li>
+</ul>
+</li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="index.html" title="previous chapter">Riak Core Tutorial</a></li>
+      <li>Next: <a href="starting.html" title="next chapter">Starting</a></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/setup.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2018, Mariano Guerra.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.6.7</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.8</a>
+      
+      |
+      <a href="_sources/setup.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
