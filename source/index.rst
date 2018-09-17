@@ -6,9 +6,16 @@
 Riak Core Tutorial
 ==================
 
+Welcome to the Riak Core Tutorial, a shorter, updated version of
+`The Riak Core Book <https://marianoguerra.github.io/little-riak-core-book/>`_ focused more on the implementation details,
+for more explanation check The Riak Core Book.
+
+Each chapter is a branch in this repo: https://gitlab.com/marianoguerra/tanodb/commits/master
+
+If you find any issue report it here: https://github.com/marianoguerra/riak-core-tutorial/issues
+
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
 
    setup
    starting
